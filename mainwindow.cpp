@@ -40,22 +40,27 @@ void MainWindow::PrintPoints(int n, char* data)
 
 void MainWindow::TimerEvent()
 {
-    static uint16_t Faza;
-    static int f;
-    int16_t* d = reinterpret_cast<int16_t*>(&usb->PortBuf[Faza]);
-    f += sc->DrawPoints(d, TimerInterval*10);
-    ui->statusBar->showMessage("TimerInterval: "+QString::number(TimerInterval)+" Faza: "+QString::number(Faza));
-    Faza += TimerInterval*20;
-    if (Faza >= SizeBuferPort)
+   // static uint16_t Faza;
+   // static int f;
+    int16_t* d = reinterpret_cast<int16_t*>(&usb->PortBuf[usb->Faza]);
+    double N = sc->DrawPoints(d, TimerInterval*10);
+    double fr;
+    if (N!=0) fr = 10000/(2*N);
+    ui->label_2->setText("Частота: "+QString::number(fr,'f', 3));
+    ui->statusBar->showMessage("TimerInterval: "+QString::number(TimerInterval)+" Faza: "+QString::number(usb->Faza));
+    usb->Faza += TimerInterval*20;
+    if (usb->Faza >= SizeBuferPort)
     {
-        Faza = 0;
-        ui->label_2->setText("Частота: "+QString::number(f));
-        f=0;
+        usb->Faza = 0;
+        //ui->label_2->setText("Частота: "+QString::number(f/2));
+       // f=0;
     }
 }
 
 void MainWindow::on_dial_valueChanged(int value)
 {
+    tmr->blockSignals(true);
+    tmr->stop();
     switch (value)
     {
     case 1: sc->ScaleX=1;
@@ -86,9 +91,9 @@ void MainWindow::on_dial_valueChanged(int value)
     break;
     case 14: sc->ScaleX=50;
     break;
-    case 15: sc->ScaleX=80;
+    case 15: sc->ScaleX=50;
     break;
-    case 16: sc->ScaleX=80;
+    case 16: sc->ScaleX=100;
     break;
     case 17: sc->ScaleX=100;
     break;
@@ -100,9 +105,15 @@ void MainWindow::on_dial_valueChanged(int value)
     }
     ui->labelScale->setText(QString::number(sc->ScaleX)+" миллисек.");
     TimerInterval=sc->ScaleX*sc->CountXSegments;
+    usb->Faza = 0;
     ui->statusBar->showMessage("TimerInterval: "+QString::number(TimerInterval));
     sc->ClearPlot();
-
+    tmr->setInterval(TimerInterval); // Задаем интервал таймера
+    if (usb->isRunning())
+    {
+           tmr->start();
+           tmr->blockSignals(false);
+    }
 }
 
 void MainWindow::on_radioMili_toggled(bool checked)
@@ -143,8 +154,6 @@ void MainWindow::on_pushButton_2_clicked()
             tmr->start();
             tmr->blockSignals(false);
            // QMessageBox::information(0, "Чтение данных", "Захват данных пошёл");
-            //File.setFileName(usb->NameFile);
-            //File.open(QIODevice::ReadOnly);
             ui->pushButton_2->setText("Остановить захват данных");
      }
     else QMessageBox::information(0, "ОШИБКА", "Поток не запущен ");
@@ -157,9 +166,7 @@ void MainWindow::on_pushButton_2_clicked()
           ui->pushButton_2->setText("Начать захват данных");
       tmr->blockSignals(true);
       tmr->stop();
-      //File.close();
    }
-
 }
 
 void MainWindow::resizeEvent(QResizeEvent * event)

@@ -16,10 +16,10 @@ public:
     int8_t PowerSc;
     int8_t CountXSegments = 10; // количество делений по оси X
     bool TypeLine=true;
-    uint8_t DensityLine=1;
+    uint8_t DensityLine=2;
     PlotGrafic(int w, int h);
     void  DrawGrafic();
-    int  DrawPoints(int16_t *buf, uint16_t CountPoints);
+    double DrawPoints(int16_t *buf, uint16_t CountPoints);
     void  ClearPlot();
 signals:
 
@@ -27,7 +27,7 @@ public slots:
 
 private:
         QGraphicsTextItem *ValueSignal;
-        long double y0 = 0;
+        double y0 = 0;
         int BeginX, BeginY;
 };
 

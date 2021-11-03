@@ -70,33 +70,56 @@ void PlotGrafic::DrawGrafic()
     }
 }
 
-int PlotGrafic::DrawPoints(int16_t *buf, uint16_t CountPoints)
+double PlotGrafic::DrawPoints(int16_t *buf, uint16_t CountPoints)
 {
    ClearPlot();
    int k=0;
-   long double x=BeginX;
-   long double y=BeginY;
-   int rise=0, fr=0;
-   long double dx = (long double)(EndX-BeginX)/CountPoints;
+   double x=BeginX;
+   double y=BeginY;
+   int rise=0, fall=0, k1,i=0;
+   int period[10]={0};
+   double dx = (long double)(EndX-BeginX)/CountPoints;
    //if (((EndX-BeginX)%CountPoints >= 5)&&(dx==0)) dx++;
    while(x<=EndX)
    {
       ValueSignal->setPlainText("k="+QString::number(k)+"   x="+QString::number(x,'f', 3)+"   EndX-BeginX="+QString::number(EndX-BeginX)+"   CountPoints="+QString::number(CountPoints)+"  dx="+QString::number(dx,'f', 3));
-      y = BeginY+((EndY-BeginY)/2) - (long double)((EndY-BeginY)*(buf[k]-0x7ff))/0xfff; //
+      y = BeginY+((EndY-BeginY)/2) - ((EndY-BeginY)*(buf[k]-0x7ff))/0xfff; //
       if (TypeLine) addLine(round(x-dx), round(y0), round(x), round(y), QPen(Qt::green,DensityLine,Qt::SolidLine,Qt::RoundCap));
       else addLine(round(x), round(y), round(x-dx), round(y), QPen(Qt::green,DensityLine,Qt::SolidLine,Qt::RoundCap));
 
       y0 = y;
-    //  if (x*1000/(k+1) >= EndX*1000/CountPoints)
-    //  {
-         k++;
-         // вычисляем количество переходов через максимальное значение
-        // if (buf[k]>buf[k-1]) {if (rise==0) fr++; rise++;}
-        // if ((buf[k]<buf[k-1])&&(rise>3)) {rise=0;}
-    //  }
       x+=dx;
+      k++;
+      // вычисляем количество переходов через максимальное значение
+      if (buf[k]>buf[k-1]) {rise++;}
+      if ((buf[k]<buf[k-1])&&(rise>3)) {rise=0; k1=k-1;}
 
-      if (k>=CountPoints) return fr;
+      if (buf[k]<buf[k-1]) {fall++;}
+      if ((buf[k]>buf[k-1])&&(fall>3))
+      {
+          fall=0;
+          period[i++]=k-k1-1;
+          if (i>=10) i=0;
+       /*   if (k-k1>0)
+          {
+             if (i!=0)
+             {
+                 double filtr=((k-k1)*i)/ksum;
+                if ((filtr>0.9)&&(filtr<1.1)) {ksum+=k-k1;i++;}
+             }
+            else {ksum+=k-k1;i++;}
+          }*/
+      }
+      if (k>=CountPoints) break;
    }
-   return fr;
+   int sum=0; uint8_t n=0;
+   QString s = "period: ";
+   for(uint8_t j=1; j<10; j++)
+   {
+       s+=QString::number(period[j])+" ";
+     if ((abs(period[j-1]-period[j])<=1)&&(period[j]!=0)) {sum+=period[j]; n++;}
+   }
+   ValueSignal->setPlainText(s);
+   if (n!=0) return sum/n;
+   else return -1;
 }

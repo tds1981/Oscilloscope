@@ -27,6 +27,7 @@ public:
 public:
        char PortBuf[SizeBuferPort]; //1 секунда, частота оцифровки 10k
        uint16_t OneReadDate;
+       uint16_t Faza;
        bool work=false;
        QString NamePort;
        QString NameFile;
