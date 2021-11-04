@@ -41,14 +41,15 @@ private slots:
 
     void on_pushButton_2_clicked();
 
-
     void on_radioButton_2_clicked(bool checked);
 
     void on_radioButton_clicked(bool checked);
 
-    void on_spinBox_valueChanged(const QString &arg1);
+   // void on_spinBox_valueChanged(const QString &arg1);
 
     void on_spinBox_valueChanged(int arg1);
+
+    void on_MainWindow_iconSizeChanged(const QSize &iconSize);
 
 private:
    void resizeEvent(QResizeEvent * event);

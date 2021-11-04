@@ -19,7 +19,6 @@ MainWindow::MainWindow(QWidget *parent) :
    // tmr->setInterval(TimerInterval); // Задаем интервал таймера
     connect(tmr, SIGNAL(timeout()), this, SLOT(TimerEvent())); // Подключаем сигнал таймера к нашему слоту
 
-
    // connect(usb, SIGNAL(OutData(uint16_t)), this, SLOT(SetFaza(uint16_t)));
 }
 
@@ -27,16 +26,6 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
-/*
-void MainWindow::PrintPoints(int n, char* data)
-{
-    ui->label->setText(QString::number(n));
-    char d[usb->SizeBuferPort];
-    memcpy(d, data, sizeof (d));
-    //sc->DrawPoints(reinterpret_cast<int16_t*>(data), usb->SizeBuferPort/2);
-
-}*/
-
 
 void MainWindow::TimerEvent()
 {
@@ -190,11 +179,6 @@ void MainWindow::on_radioButton_2_clicked(bool checked)
 void MainWindow::on_radioButton_clicked(bool checked)
 {
    sc->TypeLine = checked;
-}
-
-void MainWindow::on_spinBox_valueChanged(const QString &arg1)
-{
-
 }
 
 void MainWindow::on_spinBox_valueChanged(int arg1)

@@ -29,12 +29,14 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     usbcom.cpp \
-    plotgrafic.cpp
+    plotgrafic.cpp \
+    wav.cpp
 
 HEADERS += \
         mainwindow.h \
     usbcom.h \
-    plotgrafic.h
+    plotgrafic.h \
+    wav.h
 
 FORMS += \
         mainwindow.ui

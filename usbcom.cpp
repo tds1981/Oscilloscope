@@ -10,8 +10,8 @@ void UsbCom::run()
    OneReadDate = 2000;
    //SizeBuferPort = 2048;
     //setup COM port
-   serial.setPortName("COM8"); //NamePort
-   serial.setBaudRate(QSerialPort::Baud115200);
+   serial.setPortName(NamePort); //NamePort
+   serial.setBaudRate(512000);
    serial.setDataBits(QSerialPort::Data8);
    serial.setParity(QSerialPort::NoParity);
    serial.setStopBits(QSerialPort::OneStop);
@@ -20,9 +20,15 @@ void UsbCom::run()
    if (serial.isOpen())
    {
     work=true;
-    NameFile = "data"+QDateTime::currentDateTime().toString("dd_HH_mm_ss")+".raw";
+    NameFile = "data"+QDateTime::currentDateTime().toString("dd_HH_mm_ss")+"."+TypeFile; //"raw";
     File.setFileName(NameFile);
     File.open(QIODevice::WriteOnly);
+    if (TypeFile[0] == 'w')
+    {
+        char b[44]={0}; // резервируем место под wav заголовок
+        File.write(b, sizeof(b));
+        File.flush();
+    }
     qint64 maxSize;
     qint64 readSize;
    // char data[SizeBuferPort];
@@ -44,6 +50,14 @@ void UsbCom::run()
          }
     }
     serial.close();
+    if (TypeFile[0] == 'w')
+    {
+        Savelog("Перезапись WAV Заголовка");
+        File.seek(0);
+        WAVHEADER WH=WavHeader(SizeBuferPort/2, File.size());
+        File.write(reinterpret_cast<char*>(&WH), sizeof(WH));
+        File.flush();
+    }
     File.close();
     Savelog("RUN выполнен");
     }
@@ -59,10 +73,4 @@ void UsbCom::Savelog(QString S) {
         out << d.toStdString()+"   "+S.toStdString() << std::endl;
      }
 }
-/*
-void UsbCom::OutData()
-{
 
-}
-
-*/

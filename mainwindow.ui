@@ -287,9 +287,18 @@
     <property name="title">
      <string>Настройки</string>
     </property>
+    <widget class="QMenu" name="menu_3">
+     <property name="title">
+      <string>Тип файла</string>
+     </property>
+     <addaction name="actionraw"/>
+     <addaction name="actionwav"/>
+    </widget>
     <addaction name="action"/>
     <addaction name="separator"/>
     <addaction name="action_3"/>
+    <addaction name="separator"/>
+    <addaction name="menu_3"/>
    </widget>
    <addaction name="menu"/>
    <addaction name="menu_2"/>
@@ -311,6 +320,28 @@
   <action name="action_3">
    <property name="text">
     <string>Настройки последовательного прта</string>
+   </property>
+  </action>
+  <action name="actionraw">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>raw</string>
+   </property>
+  </action>
+  <action name="actionwav">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>wav</string>
    </property>
   </action>
  </widget>
