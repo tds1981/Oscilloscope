@@ -30,12 +30,6 @@ private slots:
 
     void on_dial_valueChanged(int value);
 
-    void on_radioMili_toggled(bool checked);
-
-    void on_radioMicro_toggled(bool checked);
-
-    void on_radioNano_toggled(bool checked);
-
     void wheelEvent (QWheelEvent * event);
   //  void mousePressEvent(QGraphicsSceneMouseEvent * event);
 
@@ -45,12 +39,10 @@ private slots:
 
     void on_radioButton_clicked(bool checked);
 
-   // void on_spinBox_valueChanged(const QString &arg1);
-
     void on_spinBox_valueChanged(int arg1);
 
-    void on_MainWindow_iconSizeChanged(const QSize &iconSize);
-
+    void ChangeTFile();
+    void CallFormDFT();
 private:
    void resizeEvent(QResizeEvent * event);
     Ui::MainWindow *ui;

@@ -30,16 +30,21 @@ SOURCES += \
         mainwindow.cpp \
     usbcom.cpp \
     plotgrafic.cpp \
-    wav.cpp
+    wav.cpp \
+    dft.cpp \
+    spektr.cpp
 
 HEADERS += \
         mainwindow.h \
     usbcom.h \
     plotgrafic.h \
-    wav.h
+    wav.h \
+    dft.h \
+    spektr.h
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    dft.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

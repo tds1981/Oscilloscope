@@ -20,14 +20,18 @@ void  PlotGrafic::ClearPlot()
     addLine(BeginX, EndY, EndX, EndY, QPen(Qt::red,3,Qt::SolidLine,Qt::RoundCap));
     addLine(BeginX, BeginY, BeginX, EndY, QPen(Qt::red,3,Qt::SolidLine,Qt::RoundCap));
     int x=BeginX;
-    uint8_t i=1;
-    while (x<EndX)
+    uint8_t i=0;
+    while (i<=CountXSegments)
     {
-        x+=(EndX-BeginX)/CountXSegments;
         addLine(x, BeginY, x, EndY, QPen(Qt::black,1,Qt::DotLine,Qt::RoundCap));
-        TextLevel = this->addText(QString::number(ScaleX*i++), QFont ("Times" , 10 , QFont :: Bold));
-        TextLevel->setX(x-30); TextLevel->setY(EndY+5);
+        TextLevel = this->addText(QString::number(ScaleX*i), QFont ("Times" , 10 , QFont :: Bold));
+        if(i != CountXSegments) TextLevel->setX(x-20);
+        else TextLevel->setX(x-40);
+        TextLevel->setY(EndY+5);
+        x+=(EndX-BeginX)/CountXSegments;
+        i++;
     }
+
 
     int y=BeginY;
     double Volt=5;
@@ -70,7 +74,7 @@ void PlotGrafic::DrawGrafic()
     }
 }
 
-double PlotGrafic::DrawPoints(int16_t *buf, uint16_t CountPoints)
+double PlotGrafic::DrawPoints(uint16_t *buf, uint16_t CountPoints)
 {
    ClearPlot();
    int k=0;
@@ -82,8 +86,9 @@ double PlotGrafic::DrawPoints(int16_t *buf, uint16_t CountPoints)
    //if (((EndX-BeginX)%CountPoints >= 5)&&(dx==0)) dx++;
    while(x<=EndX)
    {
-      ValueSignal->setPlainText("k="+QString::number(k)+"   x="+QString::number(x,'f', 3)+"   EndX-BeginX="+QString::number(EndX-BeginX)+"   CountPoints="+QString::number(CountPoints)+"  dx="+QString::number(dx,'f', 3));
-      y = BeginY+((EndY-BeginY)/2) - ((EndY-BeginY)*(buf[k]-0x7ff))/0xfff; //
+     // ValueSignal->setPlainText("k="+QString::number(k)+"   x="+QString::number(x,'f', 3)+"   EndX-BeginX="+QString::number(EndX-BeginX)+"   CountPoints="+QString::number(CountPoints)+"  dx="+QString::number(dx,'f', 3));
+      y = EndY - ((EndY-BeginY)*buf[k])/0x7ff8; //-0x7ff
+      ValueSignal->setPlainText("buf= "+QString::number(buf[k])+"   y="+QString::number(y,'f', 3));
       if (TypeLine) addLine(round(x-dx), round(y0), round(x), round(y), QPen(Qt::green,DensityLine,Qt::SolidLine,Qt::RoundCap));
       else addLine(round(x), round(y), round(x-dx), round(y), QPen(Qt::green,DensityLine,Qt::SolidLine,Qt::RoundCap));
 
@@ -119,7 +124,7 @@ double PlotGrafic::DrawPoints(int16_t *buf, uint16_t CountPoints)
        s+=QString::number(period[j])+" ";
      if ((abs(period[j-1]-period[j])<=1)&&(period[j]!=0)) {sum+=period[j]; n++;}
    }
-   ValueSignal->setPlainText(s);
+   //ValueSignal->setPlainText(s);
    if (n!=0) return sum/n;
    else return -1;
 }

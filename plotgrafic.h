@@ -19,7 +19,7 @@ public:
     uint8_t DensityLine=2;
     PlotGrafic(int w, int h);
     void  DrawGrafic();
-    double DrawPoints(int16_t *buf, uint16_t CountPoints);
+    double DrawPoints(uint16_t *buf, uint16_t CountPoints);
     void  ClearPlot();
 signals:
 

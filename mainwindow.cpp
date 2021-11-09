@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "dft.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -19,7 +20,23 @@ MainWindow::MainWindow(QWidget *parent) :
    // tmr->setInterval(TimerInterval); // Задаем интервал таймера
     connect(tmr, SIGNAL(timeout()), this, SLOT(TimerEvent())); // Подключаем сигнал таймера к нашему слоту
 
-   // connect(usb, SIGNAL(OutData(uint16_t)), this, SLOT(SetFaza(uint16_t)));
+    QAction* TypeFile = new QAction("TypeFile", 0);
+    TypeFile->setText("Тип файла: wav или rav");
+    TypeFile->setShortcut(QKeySequence("CTRL+T"));
+    TypeFile->setToolTip("TypeFile");
+    TypeFile->setStatusTip("Выбор типа файла: wav или rav");
+    TypeFile->setWhatsThis("Выбор типа файла: wav / rav");
+    connect(TypeFile, SIGNAL(triggered()), SLOT(ChangeTFile()));
+    ui->menu_2->addAction(TypeFile);
+
+    QAction* DFT_Form = new QAction("DFT", 0);
+    DFT_Form->setText("Дискретное преобразование Фурье");
+    DFT_Form->setShortcut(QKeySequence("CTRL+F"));
+    DFT_Form->setToolTip("DFT");
+    DFT_Form->setStatusTip("Дискретное преобразование Фурье");
+    connect(DFT_Form, SIGNAL(triggered()), SLOT(CallFormDFT()));
+    ui->menu_3->addAction(DFT_Form);
+
 }
 
 MainWindow::~MainWindow()
@@ -27,11 +44,31 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::ChangeTFile()
+{
+         if (usb->TypeFile[0]=='w')
+         {   usb->TypeFile[0]='r';  usb->TypeFile[2]='w';
+             ui->statusBar->showMessage("Тип сохраняемого файла: raw");
+             QMessageBox::information(0, "Смена типа сохраняемого файла", "Тип сохраняемого файла: raw");
+         }
+         else
+         {   usb->TypeFile[0]='w'; usb->TypeFile[2]='v';
+             QMessageBox::information(0, "Смена типа сохраняемого файла", "Тип сохраняемого файла: wav");
+            ui->statusBar->showMessage("Тип сохраняемого файла: wav");
+         }
+}
+
+void MainWindow::CallFormDFT()
+{
+   DFT *frm = new DFT();
+   frm->show();
+}
+
 void MainWindow::TimerEvent()
 {
    // static uint16_t Faza;
    // static int f;
-    int16_t* d = reinterpret_cast<int16_t*>(&usb->PortBuf[usb->Faza]);
+    uint16_t* d = reinterpret_cast<uint16_t*>(&usb->PortBuf[usb->Faza]);
     double N = sc->DrawPoints(d, TimerInterval*10);
     double fr;
     if (N!=0) fr = 10000/(2*N);
@@ -105,20 +142,6 @@ void MainWindow::on_dial_valueChanged(int value)
     }
 }
 
-void MainWindow::on_radioMili_toggled(bool checked)
-{
-
-}
-
-void MainWindow::on_radioMicro_toggled(bool checked)
-{
-
-}
-
-void MainWindow::on_radioNano_toggled(bool checked)
-{
-
-}
 
 void MainWindow::wheelEvent (QWheelEvent *event)
 {
@@ -160,16 +183,13 @@ void MainWindow::on_pushButton_2_clicked()
 
 void MainWindow::resizeEvent(QResizeEvent * event)
 {
-    int buf = ui->graphicsView->width();
     ui->graphicsView->resize(event->size().width()-21, event->size().height()-170);
-    ui->label->setText("old= "+QString::number(buf)+"  new= "+QString::number( ui->graphicsView->width()));
+    //ui->label->setText("old= "+QString::number(buf)+"  new= "+QString::number( ui->graphicsView->width()));
     sc->setSceneRect(0,0, ui->graphicsView->width()-5, ui->graphicsView->height()-5);
     sc->EndX = ui->graphicsView->width()-5;
     sc->EndY = ui->graphicsView->height()-50;
     sc->ClearPlot();
 }
-
-
 
 void MainWindow::on_radioButton_2_clicked(bool checked)
 {

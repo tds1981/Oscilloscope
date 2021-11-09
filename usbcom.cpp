@@ -41,6 +41,8 @@ void UsbCom::run()
          if (maxSize >= OneReadDate)
          {
             readSize = serial.read(&PortBuf[Cursor], OneReadDate);
+            uint16_t* p = reinterpret_cast<uint16_t*>(&PortBuf[Cursor]);
+            for(uint16_t k=0; k<OneReadDate/2; k++) p[k] = p[k]>>1;
             emit OutData(Cursor);
             File.write(&PortBuf[Cursor], readSize);
             File.flush();
