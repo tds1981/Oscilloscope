@@ -7,11 +7,10 @@ UsbCom::UsbCom()
 
 void UsbCom::run()
 {
-   OneReadDate = 2000;
-   //SizeBuferPort = 2048;
+   uint32_t OneReadDate = 2*SamplingRate/100;
     //setup COM port
    serial.setPortName(NamePort); //NamePort
-   serial.setBaudRate(512000);
+   serial.setBaudRate(1024000);
    serial.setDataBits(QSerialPort::Data8);
    serial.setParity(QSerialPort::NoParity);
    serial.setStopBits(QSerialPort::OneStop);
@@ -33,22 +32,24 @@ void UsbCom::run()
     qint64 readSize;
    // char data[SizeBuferPort];
     Savelog("Начинаем чтение");
-    uint16_t Cursor=0;
+    uint32_t Cursor=0;
     while(work)
     {
          serial.waitForReadyRead(1);
          maxSize = serial.bytesAvailable();
          if (maxSize >= OneReadDate)
          {
-            readSize = serial.read(&PortBuf[Cursor], OneReadDate);
-            uint16_t* p = reinterpret_cast<uint16_t*>(&PortBuf[Cursor]);
-            for(uint16_t k=0; k<OneReadDate/2; k++) p[k] = p[k]>>1;
-            emit OutData(Cursor);
-            File.write(&PortBuf[Cursor], readSize);
+            if((maxSize<(SamplingRate-Cursor)*2)&&(maxSize%2==0)) OneReadDate = maxSize;
+            else OneReadDate = (SamplingRate-Cursor)*2;
+            char* p = reinterpret_cast<char*>(&PortBuf[Cursor]);
+            readSize = serial.read(p, OneReadDate);
+            for(uint32_t k=0; k<readSize/2; k++) PortBuf[Cursor+k] = PortBuf[Cursor+k]>>1;
+            //emit OutData(Cursor);
+            File.write(p, readSize);
             File.flush();
-            Savelog("Готово к чтению: "+QString::number(maxSize)+ " Прочитано:"+QString::number(readSize));
-            Cursor+=readSize;
-            if (Cursor>=sizeof(PortBuf)) Cursor = 0;
+           // Savelog("Было Готово к чтению: "+QString::number(maxSize)+ " Прочитано:"+QString::number(readSize));
+            Cursor+=readSize/2;
+            if (Cursor>=(sizeof(PortBuf))/2) Cursor = 0;
          }
     }
     serial.close();
@@ -56,7 +57,7 @@ void UsbCom::run()
     {
         Savelog("Перезапись WAV Заголовка");
         File.seek(0);
-        WAVHEADER WH=WavHeader(SizeBuferPort/2, File.size());
+        WAVHEADER WH=WavHeader(SamplingRate, File.size());
         File.write(reinterpret_cast<char*>(&WH), sizeof(WH));
         File.flush();
     }

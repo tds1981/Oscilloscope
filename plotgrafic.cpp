@@ -1,21 +1,22 @@
 #include "plotgrafic.h"
 
-PlotGrafic::PlotGrafic(int w, int h)
+PlotGrafic::PlotGrafic(int w, int h, unsigned int MX, unsigned int MY)
 {
     this->setSceneRect(0, 0, w, h);
     BeginX=50;
     BeginY=10;
     EndX= w;
     EndY = h-50;
-
+    MaxX = MX;
+    MaxY = MY;
     ClearPlot();
-    ScaleX =10;
 }
 
 void  PlotGrafic::ClearPlot()
 {
     clear();
     removeItem(nullptr);
+    unsigned int ScaleX = MaxX/CountXSegments;
     QGraphicsTextItem *TextLevel;
     addLine(BeginX, EndY, EndX, EndY, QPen(Qt::red,3,Qt::SolidLine,Qt::RoundCap));
     addLine(BeginX, BeginY, BeginX, EndY, QPen(Qt::red,3,Qt::SolidLine,Qt::RoundCap));
@@ -51,7 +52,7 @@ void  PlotGrafic::ClearPlot()
     ValueSignal->setY(EndY+25);
 }
 
-void PlotGrafic::DrawGrafic()
+/*void PlotGrafic::DrawGrafic()
 {
     ClearPlot();
     long double y = BeginY;
@@ -72,7 +73,7 @@ void PlotGrafic::DrawGrafic()
        x += dx;
        i++;
     }
-}
+}*/
 
 double PlotGrafic::DrawPoints(uint16_t *buf, uint16_t CountPoints)
 {

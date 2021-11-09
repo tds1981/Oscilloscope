@@ -16,7 +16,7 @@
 
 using namespace std;
 
-#define SizeBuferPort 20000
+const unsigned int SamplingRate = 100000; //частота дискретизации
 
 class UsbCom : public QThread
 {
@@ -28,16 +28,16 @@ public:
    // WAVHEADER WavHeader(uint32_t  sampleRate);
 public:
        char TypeFile[5]="wav";
-       char PortBuf[SizeBuferPort]; //1 секунда, частота оцифровки 10k
-       uint16_t OneReadDate;
-       uint16_t Faza;
+       uint16_t PortBuf[SamplingRate]; //1 секунда, частота оцифровки 100k
+       //uint32_t OneReadDate;
+       //uint16_t Faza;
        bool work=false;
        QString NamePort;
        QString NameFile;
        QSerialPort serial;
        QFile File;
 signals:
-       void OutData(uint16_t n);
+       void OutData(uint32_t n);
 
 };
 

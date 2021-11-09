@@ -11,16 +11,17 @@ class PlotGrafic : public QGraphicsScene
     Q_OBJECT
 
 public:
-    int EndX, EndY;
-    int ScaleX; //
-    int8_t PowerSc;
-    int8_t CountXSegments = 10; // количество делений по оси X
-    bool TypeLine=true;
-    uint8_t DensityLine=2;
-    PlotGrafic(int w, int h);
+    PlotGrafic(int w, int h, unsigned int MX, unsigned int MY);
     void  DrawGrafic();
     double DrawPoints(uint16_t *buf, uint16_t CountPoints);
     void  ClearPlot();
+
+    int EndX, EndY;
+    unsigned int MaxX; // максимальное значение по оси X
+    unsigned int MaxY;
+    uint8_t CountXSegments = 10; // количество делений по оси X
+    bool TypeLine=true;
+    uint8_t DensityLine=2;
 signals:
 
 public slots:

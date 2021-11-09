@@ -48,7 +48,8 @@ private:
     Ui::MainWindow *ui;
     PlotGrafic *sc;
     QTimer *tmr;
-    uint16_t TimerInterval=100;
+    uint32_t TimerInterval=1;
+    unsigned int Faza;
     //QFile File;
 public:
      UsbCom *usb;

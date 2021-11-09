@@ -7,9 +7,8 @@ DFT::DFT(QWidget *parent) :
     uiDFT(new Ui::DFT)
 {
     uiDFT->setupUi(this);
-    scDFT = new PlotGrafic(uiDFT->graphicsView->width()-15, uiDFT->graphicsView->height()-5);
+    scDFT = new PlotGrafic(uiDFT->graphicsView->width()-15, uiDFT->graphicsView->height()-5, 10000, 10000);
     uiDFT->graphicsView->setScene(scDFT);
-    scDFT->ScaleX=1000;
     scDFT->ClearPlot();
 
     SpektrCalcul = new Spektr();

@@ -7,9 +7,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    sc = new PlotGrafic(ui->graphicsView->width()-5, ui->graphicsView->height()-5);
+    sc = new PlotGrafic(ui->graphicsView->width()-5, ui->graphicsView->height()-5, 10, 5);
     ui->graphicsView->setScene(sc);
-     ui->dial->setValue(10);
+    //ui->dial->setValue(ui->dial->value());
 
     usb = new  UsbCom();
     ui->comboBox->addItem("COM8");
@@ -66,18 +66,17 @@ void MainWindow::CallFormDFT()
 
 void MainWindow::TimerEvent()
 {
-   // static uint16_t Faza;
    // static int f;
-    uint16_t* d = reinterpret_cast<uint16_t*>(&usb->PortBuf[usb->Faza]);
-    double N = sc->DrawPoints(d, TimerInterval*10);
+    unsigned int CountSampling = SamplingRate*TimerInterval/1000;
+    double N = sc->DrawPoints(&usb->PortBuf[Faza], CountSampling);
     double fr;
     if (N!=0) fr = 10000/(2*N);
     ui->label_2->setText("Частота: "+QString::number(fr,'f', 3));
-    ui->statusBar->showMessage("TimerInterval: "+QString::number(TimerInterval)+" Faza: "+QString::number(usb->Faza));
-    usb->Faza += TimerInterval*20;
-    if (usb->Faza >= SizeBuferPort)
+    ui->statusBar->showMessage("Timer Interval: "+QString::number(TimerInterval)+ "CountSampling: "+QString::number(CountSampling) + " Faza: "+QString::number(Faza));
+    Faza += CountSampling;
+    if (Faza >= SamplingRate)
     {
-        usb->Faza = 0;
+        Faza = 0;
         //ui->label_2->setText("Частота: "+QString::number(f/2));
        // f=0;
     }
@@ -87,51 +86,64 @@ void MainWindow::on_dial_valueChanged(int value)
 {
     tmr->blockSignals(true);
     tmr->stop();
+    unsigned int Scale=0; // микросекунд в делении
     switch (value)
     {
-    case 1: sc->ScaleX=1;
+    case 1: Scale=100;
     break;
-    case 2: sc->ScaleX=1;
+    case 2: Scale=100;
     break;
-    case 3: sc->ScaleX=2;
+    case 3: Scale=200;
     break;
-    case 4: sc->ScaleX=2;
+    case 4: Scale=200;
     break;
-    case 5: sc->ScaleX=4;
+    case 5: Scale=500;
     break;
-    case 6: sc->ScaleX=4;
+    case 6: Scale=500;
     break;
-    case 7: sc->ScaleX=5;
+    case 7: Scale=1000;
     break;
-    case 8: sc->ScaleX=5;
+    case 8: Scale=1000;
     break;
-    case 9: sc->ScaleX=10;
+    case 9: Scale=2000;
     break;
-    case 10: sc->ScaleX=10;
+    case 10: Scale=2000;
     break;
-    case 11: sc->ScaleX=20;
+    case 11: Scale=5000;
     break;
-    case 12: sc->ScaleX=20;
+    case 12: Scale=5000;
     break;
-    case 13: sc->ScaleX=50;
+    case 13: Scale=10000;
     break;
-    case 14: sc->ScaleX=50;
+    case 14: Scale=10000;
     break;
-    case 15: sc->ScaleX=50;
+    case 15: Scale=20000;
     break;
-    case 16: sc->ScaleX=100;
+    case 16: Scale=20000;
     break;
-    case 17: sc->ScaleX=100;
+    case 17: Scale=50000;
     break;
-    case 18: sc->ScaleX=100;
+    case 18: Scale=50000;
     break;
-    case 19: sc->ScaleX=200;
+    case 19: Scale=100000;
     break;
-    case 20: sc->ScaleX=200;
+    case 20: Scale=100000;
+
     }
-    ui->labelScale->setText(QString::number(sc->ScaleX)+" миллисек.");
-    TimerInterval=sc->ScaleX*sc->CountXSegments;
-    usb->Faza = 0;
+
+    if (Scale<1000)
+    {
+        ui->labelScale->setText(QString::number(Scale)+" МИКРОсекунд");
+        sc->MaxX = Scale * sc->CountXSegments;
+    }
+    else
+    {
+        ui->labelScale->setText(QString::number(Scale/1000)+" МИЛЛИсекунд");
+        sc->MaxX = (Scale/1000) * sc->CountXSegments;
+    }
+    TimerInterval=(Scale* sc->CountXSegments)/1000; // микросекунды в миллисекунды
+
+    Faza = 0;
     ui->statusBar->showMessage("TimerInterval: "+QString::number(TimerInterval));
     sc->ClearPlot();
     tmr->setInterval(TimerInterval); // Задаем интервал таймера
