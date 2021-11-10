@@ -11,6 +11,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->graphicsView->setScene(sc);
     //ui->dial->setValue(ui->dial->value());
 
+    Calculate = new Spektr(sc->BeginX, sc->BeginY, sc->EndX, sc->EndY, SamplingRate);
+
     usb = new  UsbCom();
     ui->comboBox->addItem("COM8");
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
@@ -19,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :
     tmr = new QTimer(this); // Создаем объект класса QTimer и передаем адрес переменной
    // tmr->setInterval(TimerInterval); // Задаем интервал таймера
     connect(tmr, SIGNAL(timeout()), this, SLOT(TimerEvent())); // Подключаем сигнал таймера к нашему слоту
+    connect(usb, SIGNAL(OutData(uint16_t*)), this, SLOT(ResiveDate(uint16_t*))); // Подключаем сигнал таймера к нашему слоту
 
     QAction* TypeFile = new QAction("TypeFile", 0);
     TypeFile->setText("Тип файла: wav или rav");
@@ -64,28 +67,59 @@ void MainWindow::CallFormDFT()
    frm->show();
 }
 
-void MainWindow::TimerEvent()
+void MainWindow::ResiveDate(uint16_t* data)
 {
-   // static int f;
-    unsigned int CountSampling = SamplingRate*TimerInterval/1000;
-    double N = sc->DrawPoints(&usb->PortBuf[Faza], CountSampling);
-    double fr;
-    if (N!=0) fr = 10000/(2*N);
-    ui->label_2->setText("Частота: "+QString::number(fr,'f', 3));
-    ui->statusBar->showMessage("Timer Interval: "+QString::number(TimerInterval)+ "CountSampling: "+QString::number(CountSampling) + " Faza: "+QString::number(Faza));
-    Faza += CountSampling;
-    if (Faza >= SamplingRate)
-    {
-        Faza = 0;
-        //ui->label_2->setText("Частота: "+QString::number(f/2));
-       // f=0;
+   //DatePoint = data;
+
+   if (!Calculate->isRunning())
+   {
+       Calculate->CountSampling = SamplingRate*TimerInterval/1000;
+       Calculate->InBuf = data;
+       Calculate->EndX = sc->EndX;
+       Calculate->EndY = sc->EndY;
+       if ((Calculate->OutBuf != DateBufs)&&(Calculate->OutBuf != nullptr)) Calculate->DeleteBufers();
+       Calculate->start(QThread::HighPriority);
+       if (tmr->signalsBlocked())
+       {
+           NumberBuf=0;
+           tmr->setInterval(TimerInterval); // Задаем интервал таймера
+           tmr->start();
+           tmr->blockSignals(false);
+       }
+   }
+   else delete [] data;
+}
+
+void MainWindow::TimerEvent()
+{ 
+    Calculate->TimerWork = true;
+    if ((NumberBuf == 0)&&(Calculate->OutBuf != nullptr))
+    {     
+         DateBufs = Calculate->OutBuf;
+        // Calculate->OutBuf = nullptr;
+         CountBufs = Calculate->CountBufers;
+         Size1Buf = Calculate->Xmax;
     }
+
+    if (DateBufs != nullptr)
+      if (DateBufs[NumberBuf] != nullptr)
+      {
+        sc->DrawBuferGrafic(DateBufs[NumberBuf], Size1Buf);
+        ui->statusBar->showMessage("  Timer Interval: "+QString::number(TimerInterval)+ "  CountBufers: "+QString::number(Calculate->CountBufers)+ + "  CountSampling: "+QString::number(Calculate->CountSampling)+ "  Xmax: "+QString::number(Calculate->Xmax) + " NumberBuf: "+QString::number(NumberBuf));
+        delete [] DateBufs[NumberBuf];
+        DateBufs[NumberBuf]=nullptr;
+        NumberBuf++;
+        if (NumberBuf>=CountBufs) {NumberBuf=0; delete [] DateBufs; DateBufs=nullptr;}
+     }
+     Calculate->TimerWork = false;
 }
 
 void MainWindow::on_dial_valueChanged(int value)
 {
     tmr->blockSignals(true);
+    usb->blockSignals(true);
     tmr->stop();
+
     unsigned int Scale=0; // микросекунд в делении
     switch (value)
     {
@@ -134,24 +168,24 @@ void MainWindow::on_dial_valueChanged(int value)
     if (Scale<1000)
     {
         ui->labelScale->setText(QString::number(Scale)+" МИКРОсекунд");
-        sc->MaxX = Scale * sc->CountXSegments;
     }
     else
     {
         ui->labelScale->setText(QString::number(Scale/1000)+" МИЛЛИсекунд");
-        sc->MaxX = (Scale/1000) * sc->CountXSegments;
     }
-    TimerInterval=(Scale* sc->CountXSegments)/1000; // микросекунды в миллисекунды
-
-    Faza = 0;
-    ui->statusBar->showMessage("TimerInterval: "+QString::number(TimerInterval));
-    sc->ClearPlot();
-    tmr->setInterval(TimerInterval); // Задаем интервал таймера
-    if (usb->isRunning())
+    while(Calculate->TimerWork){};
+    while(Calculate->isRunning()){};
+    if((DateBufs != nullptr)&&(NumberBuf!=0))
     {
-           tmr->start();
-           tmr->blockSignals(false);
+       for(unsigned int i=0; i<CountBufs; i++)
+        if(DateBufs[i] != nullptr) {delete [] DateBufs[i]; DateBufs[i]=nullptr;}
+       delete [] DateBufs;
+       DateBufs = nullptr;
     }
+    if (Calculate->OutBuf != nullptr) Calculate->DeleteBufers();
+    TimerInterval=(Scale * sc->CountXSegments)/1000; // микросекунды в миллисекунды
+    ui->statusBar->showMessage("TimerInterval: "+QString::number(TimerInterval));
+    usb->blockSignals(false);
 }
 
 
@@ -172,11 +206,13 @@ void MainWindow::on_pushButton_2_clicked()
 
     if (!usb->isRunning())
     {
-     usb->start(QThread::LowestPriority);
+     usb->start(QThread::HighPriority);
      if (usb->isRunning())//&&usb->serial.isOpen())
-     {      tmr->setInterval(TimerInterval); // Задаем интервал таймера
-            tmr->start();
-            tmr->blockSignals(false);
+     {
+         tmr->blockSignals(true);
+         // tmr->setInterval(TimerInterval); // Задаем интервал таймера
+           // tmr->start();
+           // tmr->blockSignals(false);
            // QMessageBox::information(0, "Чтение данных", "Захват данных пошёл");
             ui->pushButton_2->setText("Остановить захват данных");
      }
@@ -185,11 +221,11 @@ void MainWindow::on_pushButton_2_clicked()
    else
    {
       usb->work = false;
+      tmr->blockSignals(true);
+      tmr->stop();
       QMessageBox::information(0, "Захват", "Завершение захвата");
       if (!usb->isRunning())
           ui->pushButton_2->setText("Начать захват данных");
-      tmr->blockSignals(true);
-      tmr->stop();
    }
 }
 

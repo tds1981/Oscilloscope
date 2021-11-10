@@ -1,11 +1,86 @@
 #include "spektr.h"
 
-Spektr::Spektr()
+Spektr::Spektr(int BX, int BY, int EX, int EY, unsigned int SR)
 {
-
+  BeginX = BX;
+  BeginY = BY;
+  EndX = EX;
+  EndY = EY;
+  SamplingRate = SR;
 }
 
 void Spektr::run()
+{
+    //CalculateDFT();
+    CalculateTimeGraf();
+}
+
+void Spektr::CalculateTimeGraf()
+{
+  // if (OutBuf != nullptr) DeleteBufers();
+   Xmax = static_cast<unsigned int>(EndX-BeginX);
+   CountBufers = SamplingRate/CountSampling;
+   OutBuf = new unsigned int*[CountBufers];
+
+   double dx = (double)Xmax / CountSampling;
+   double dk = (double)CountSampling / Xmax;
+   double k=0;
+   double x=0;
+   unsigned int k_index=0;
+   unsigned int x_index=0;
+   double y=BeginY;
+
+   for(unsigned int j=0; j<CountBufers; j++)
+   {
+    unsigned int* OutY = new unsigned int[Xmax];
+    x=0;
+    x_index=0;
+    if (Xmax >= CountSampling)
+        while(x_index<Xmax)
+        {
+        k_index = static_cast<unsigned int>(floor(k));
+        // unsigned int x_index = static_cast<unsigned int>(floor(x));
+         if (k_index<SamplingRate) y = EndY - ((EndY-BeginY)*InBuf[k_index])/0x7ff8; //-0x7ff
+        OutY[x_index] = static_cast<unsigned int>(round(y));
+        x_index++;
+        k+=dk;
+        if(k_index>=SamplingRate) k_index=SamplingRate-1;
+        }
+    else
+        while(k_index<j*CountSampling)
+        {
+          // unsigned int k_index = static_cast<unsigned int>(floor(k));
+           x_index = static_cast<unsigned int>(floor(x));
+           if (k<SamplingRate) y = EndY - ((EndY-BeginY)*InBuf[k_index])/0x7ff8; //-0x7ff
+           OutY[x_index] = static_cast<unsigned int>(round(y));
+           x+=dx;
+           k_index++;
+           if(k_index>=SamplingRate) k_index=SamplingRate-1;
+        }
+
+
+    OutBuf[j] = OutY;
+   }
+   delete [] InBuf;
+  // DeleteBufers();
+
+}
+
+void Spektr::DeleteBufers()
+{
+   unsigned int i=0;
+   while(TimerWork){}
+   while(i<CountBufers)
+     if (OutBuf[i]!=nullptr)
+     {
+            delete [] OutBuf[i];
+            OutBuf[i] = nullptr;
+            i++;
+     }
+   if (!TimerWork){ delete [] OutBuf; OutBuf = nullptr;}
+}
+
+void Spektr::CalculateDFT()
 {
     unsigned int sec=0;
     uint16_t* buf = new uint16_t[SamplingRate];
@@ -27,7 +102,7 @@ void Spektr::run()
          sec++;
     }
     fin.close();
-    delete buf;
+    delete[] buf;
 }
 
 int Spektr::DFT(uint16_t *buf, uint16_t *OutBuf, unsigned int n)

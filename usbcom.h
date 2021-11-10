@@ -28,7 +28,7 @@ public:
    // WAVHEADER WavHeader(uint32_t  sampleRate);
 public:
        char TypeFile[5]="wav";
-       uint16_t PortBuf[SamplingRate]; //1 секунда, частота оцифровки 100k
+      // uint16_t PortBuf[SamplingRate]; //1 секунда, частота оцифровки 100k
        //uint32_t OneReadDate;
        //uint16_t Faza;
        bool work=false;
@@ -37,7 +37,7 @@ public:
        QSerialPort serial;
        QFile File;
 signals:
-       void OutData(uint32_t n);
+       void OutData(uint16_t* buf);
 
 };
 

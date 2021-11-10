@@ -33,23 +33,28 @@ void UsbCom::run()
    // char data[SizeBuferPort];
     Savelog("Начинаем чтение");
     uint32_t Cursor=0;
+    uint16_t* Port = new uint16_t[SamplingRate];
     while(work)
     {
          serial.waitForReadyRead(1);
          maxSize = serial.bytesAvailable();
          if (maxSize >= OneReadDate)
-         {
+         { 
             if((maxSize<(SamplingRate-Cursor)*2)&&(maxSize%2==0)) OneReadDate = maxSize;
             else OneReadDate = (SamplingRate-Cursor)*2;
-            char* p = reinterpret_cast<char*>(&PortBuf[Cursor]);
+            char* p = reinterpret_cast<char*>(&Port[Cursor]);
             readSize = serial.read(p, OneReadDate);
-            for(uint32_t k=0; k<readSize/2; k++) PortBuf[Cursor+k] = PortBuf[Cursor+k]>>1;
-            //emit OutData(Cursor);
+            for(uint32_t k=0; k<readSize/2; k++) Port[Cursor+k] = Port[Cursor+k]>>1;
             File.write(p, readSize);
             File.flush();
-           // Savelog("Было Готово к чтению: "+QString::number(maxSize)+ " Прочитано:"+QString::number(readSize));
+            Savelog("Было Готово к чтению: "+QString::number(maxSize)+ " Прочитано:"+QString::number(readSize));
             Cursor+=readSize/2;
-            if (Cursor>=(sizeof(PortBuf))/2) Cursor = 0;
+            if (Cursor>=SamplingRate)
+            {
+                emit OutData(Port);
+                Cursor = 0;
+                Port = new uint16_t[SamplingRate];
+            }
          }
     }
     serial.close();
@@ -62,6 +67,7 @@ void UsbCom::run()
         File.flush();
     }
     File.close();
+    delete [] Port;
     Savelog("RUN выполнен");
     }
    else Savelog("Порт не открыт");

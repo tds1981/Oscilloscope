@@ -10,6 +10,7 @@
 
 #include "plotgrafic.h"
 #include "usbcom.h"
+#include "spektr.h"
 
 namespace Ui {
 class MainWindow;
@@ -26,7 +27,7 @@ public:
 private slots:
     void TimerEvent();
 
-    //void PrintPoints(int n, char* data);
+    void ResiveDate(uint16_t* data);
 
     void on_dial_valueChanged(int value);
 
@@ -42,14 +43,20 @@ private slots:
     void on_spinBox_valueChanged(int arg1);
 
     void ChangeTFile();
+
     void CallFormDFT();
 private:
    void resizeEvent(QResizeEvent * event);
     Ui::MainWindow *ui;
     PlotGrafic *sc;
+    Spektr *Calculate;
     QTimer *tmr;
-    uint32_t TimerInterval=1;
-    unsigned int Faza;
+    uint32_t TimerInterval=10;
+
+    unsigned int** DateBufs;
+    unsigned int CountBufs;
+    unsigned int Size1Buf;
+    unsigned int NumberBuf=0;
     //QFile File;
 public:
      UsbCom *usb;

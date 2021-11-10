@@ -52,11 +52,20 @@ void  PlotGrafic::ClearPlot()
     ValueSignal->setY(EndY+25);
 }
 
+void PlotGrafic::DrawBuferGrafic(unsigned int* Buf, unsigned int SizeBuf)
+{
+    ClearPlot();
+    for(unsigned int i=0; i<SizeBuf-2; i++)
+        if (TypeLine)
+             addLine(BeginX+i, BeginY+Buf[i], BeginX+i+1, BeginY+Buf[i+1], QPen(Qt::green,DensityLine,Qt::SolidLine,Qt::RoundCap));
+        else addLine(BeginX+i, BeginY+Buf[i], BeginX+i+1, BeginY+Buf[i]+1, QPen(Qt::green,DensityLine,Qt::SolidLine,Qt::RoundCap));
+}
+
+
 /*void PlotGrafic::DrawGrafic()
 {
     ClearPlot();
-    long double y = BeginY;
-    long  double y0 = EndY/2;
+    long double y = BeginY;    long  double y0 = EndY/2;
     long double A = (EndY-BeginY)/4;
 
     long double x=0;

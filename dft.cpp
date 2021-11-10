@@ -11,7 +11,7 @@ DFT::DFT(QWidget *parent) :
     uiDFT->graphicsView->setScene(scDFT);
     scDFT->ClearPlot();
 
-    SpektrCalcul = new Spektr();
+    SpektrCalcul = new Spektr(scDFT->BeginX, scDFT->BeginY, scDFT->EndX, scDFT->EndY, SamplingRate);
     connect(SpektrCalcul , SIGNAL(OutResult(unsigned int,  uint16_t*)), this, SLOT(ReceiveData(unsigned int,  uint16_t*)));
 }
 
