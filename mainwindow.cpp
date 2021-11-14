@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "dft.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -11,8 +10,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->graphicsView->setScene(sc);
     //ui->dial->setValue(ui->dial->value());
 
-    Calculate = new Spektr(sc->BeginX, sc->BeginY, sc->EndX, sc->EndY, SamplingRate);
-
+    Calculate = new Spektr(sc->BeginX, sc->BeginY, sc->EndX, sc->EndY, SamplingRate, 1);
+   // Calculate->runFunction = Calculate->CalculateTimeGraf;
     usb = new  UsbCom();
     ui->comboBox->addItem("COM8");
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
@@ -21,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
     tmr = new QTimer(this); // Создаем объект класса QTimer и передаем адрес переменной
    // tmr->setInterval(TimerInterval); // Задаем интервал таймера
     connect(tmr, SIGNAL(timeout()), this, SLOT(TimerEvent())); // Подключаем сигнал таймера к нашему слоту
-    connect(usb, SIGNAL(OutData(uint16_t*)), this, SLOT(ResiveDate(uint16_t*))); // Подключаем сигнал таймера к нашему слоту
+    connect(usb, SIGNAL(OutData(uint16_t*)), this, SLOT(ResiveDate(uint16_t*)));
 
     QAction* TypeFile = new QAction("TypeFile", 0);
     TypeFile->setText("Тип файла: wav или rav");
@@ -40,6 +39,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(DFT_Form, SIGNAL(triggered()), SLOT(CallFormDFT()));
     ui->menu_3->addAction(DFT_Form);
 
+    frm = new DFT(this);
+   // connect(this, SIGNAL(OutDataSpectr(double*)), frm, SLOT(ResiveDataUSB(double*)));
 }
 
 MainWindow::~MainWindow()
@@ -63,13 +64,18 @@ void MainWindow::ChangeTFile()
 
 void MainWindow::CallFormDFT()
 {
-   DFT *frm = new DFT();
-   frm->show();
+    frm->show();
 }
 
 void MainWindow::ResiveDate(uint16_t* data)
 {
-   //DatePoint = data;
+   // if (frm != nullptr)
+   // {
+        double* DataForSpectr = new double[SamplingRate+31072];
+        for(unsigned int j=0; j<SamplingRate; j++) DataForSpectr[j]=static_cast<double>(data[j]);
+        //if (frm->DataSamples == nullptr) frm->DataSamples =  DataForSpectr;
+        emit OutDataSpectr(DataForSpectr);
+   // }
 
    if (!Calculate->isRunning())
    {

@@ -18,6 +18,7 @@ void UsbCom::run()
    serial.open(QSerialPort::ReadWrite);
    if (serial.isOpen())
    {
+       serial.clear();
     work=true;
     NameFile = "data"+QDateTime::currentDateTime().toString("dd_HH_mm_ss")+"."+TypeFile; //"raw";
     File.setFileName(NameFile);
@@ -50,7 +51,7 @@ void UsbCom::run()
             Savelog("Было Готово к чтению: "+QString::number(maxSize)+ " Прочитано:"+QString::number(readSize));
             Cursor+=readSize/2;
             if (Cursor>=SamplingRate)
-            {
+            {            
                 emit OutData(Port);
                 Cursor = 0;
                 Port = new uint16_t[SamplingRate];

@@ -11,6 +11,7 @@
 #include "plotgrafic.h"
 #include "usbcom.h"
 #include "spektr.h"
+#include "dft.h"
 
 namespace Ui {
 class MainWindow;
@@ -48,6 +49,7 @@ private slots:
 private:
    void resizeEvent(QResizeEvent * event);
     Ui::MainWindow *ui;
+    DFT *frm;
     PlotGrafic *sc;
     Spektr *Calculate;
     QTimer *tmr;
@@ -60,6 +62,9 @@ private:
     //QFile File;
 public:
      UsbCom *usb;
+
+signals:
+     void OutDataSpectr(double* buf);
 
 };
 

@@ -38,6 +38,7 @@ public:
        QFile File;
 signals:
        void OutData(uint16_t* buf);
+       //void OutDataSpectr(uint16_t* buf);
 
 };
 
