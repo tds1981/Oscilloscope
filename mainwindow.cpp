@@ -80,7 +80,7 @@ void MainWindow::ResiveDateForSpectr(uint16_t* data)
 }
 void MainWindow::ResiveDate(uint16_t* data, unsigned int SizeData)
 {
-   static unsigned int CountElements;
+   //static unsigned int CountElements;
 
    if (!Calculate->isRunning())
    {
@@ -91,22 +91,20 @@ void MainWindow::ResiveDate(uint16_t* data, unsigned int SizeData)
        Calculate->SizeInBuf = SizeData;
        Calculate->EndX = sc->EndX;
        Calculate->EndY = sc->EndY;
-       Calculate->start(QThread::HighPriority);
+       Calculate->start(QThread::NormalPriority);
      }
      else
      {
-        if (Calculate->InBuf != nullptr)
+        if (Calculate->InBuf == nullptr)
                 Calculate->InBuf = new uint16_t[CountSamplingShow];
-        for(unsigned int i=0;i<SizeData;i++) Calculate->InBuf[CountElements++]=data[i];
+        for(unsigned int i=0;i<SizeData;i++) Calculate->InBuf[Calculate->SizeInBuf++]=data[i];
         delete [] data;
-        if (CountElements>=CountSamplingShow)
+        if (Calculate->SizeInBuf==CountSamplingShow)
         {
-           Calculate->SizeInBuf = CountElements;
-           CountElements=0;
            Calculate->CountSamplingShow = CountSamplingShow;
            Calculate->EndX = sc->EndX;
            Calculate->EndY = sc->EndY;
-           Calculate->start(QThread::HighPriority);
+           Calculate->start(QThread::NormalPriority);
         }
      }
    }
@@ -118,30 +116,6 @@ void MainWindow::ResiveDate(uint16_t* data, unsigned int SizeData)
      ui->statusBar->showMessage(" SizeInBuf: "+QString::number(Calculate->SizeInBuf)+ " Show X max: "+QString::number(SizeArray)+ " CountSamplingShow: "+QString::number(Calculate->CountSamplingShow));
     delete [] Data;
 }
-
-/*void MainWindow::TimerEvent()
-{ 
-    Calculate->TimerWork = true;
-    if ((NumberBuf == 0)&&(Calculate->OutBuf != nullptr))
-    {     
-         DateBufs = Calculate->OutBuf;
-        // Calculate->OutBuf = nullptr;
-         CountBufs = Calculate->CountBufers;
-         Size1Buf = Calculate->Xmax;
-    }
-
-    if (DateBufs != nullptr)
-      if (DateBufs[NumberBuf] != nullptr)
-      {
-        sc->DrawBuferGrafic(DateBufs[NumberBuf], Size1Buf);
-
-        delete [] DateBufs[NumberBuf];
-        DateBufs[NumberBuf]=nullptr;
-        NumberBuf++;
-        if (NumberBuf>=CountBufs) {NumberBuf=0; delete [] DateBufs; DateBufs=nullptr;}
-     }
-     Calculate->TimerWork = false;
-}*/
 
 void MainWindow::on_dial_valueChanged(int value)
 {

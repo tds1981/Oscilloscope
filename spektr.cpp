@@ -146,7 +146,7 @@ void Spektr::CalculateTimeGraf()
    double y=BeginY;
    unsigned int interval = CountSamplingShow*1000 / SamplingRate;
    tmr->setInterval(interval); // Задаем интервал таймера
-
+    qDebug() <<"Timer interval: "<<interval;
    for(unsigned int j=0; j<CountBufers; j++)
    {  
     tmr->setSingleShot(true);
@@ -166,12 +166,13 @@ void Spektr::CalculateTimeGraf()
         if(k_index>=SizeInBuf) k_index=SizeInBuf-1;
         }
     else
-        while(k_index<j*CountSamplingShow)
+        for(unsigned int h=0; h<CountSamplingShow; h++)
         {
-           x_index = static_cast<unsigned int>(floor(x));
-           if (k<SizeInBuf) y = EndY - ((EndY-BeginY)*InBuf[k_index])/0x7ff8; //-0x7ff
-           OutY[x_index] = static_cast<unsigned int>(round(y));
-           x+=dx;
+          // x_index = static_cast<unsigned int>(floor(x));
+           if (k_index<SizeInBuf) y = EndY - ((EndY-BeginY)*InBuf[k_index])/0x7ff8; //-0x7ff
+           if (x_index<Xmax) OutY[x_index] = static_cast<unsigned int>(round(y));
+           //x+=dx;
+           if (h % (CountSamplingShow / Xmax) ==0) x_index++;
            k_index++;
            if(k_index>=SizeInBuf) k_index=SizeInBuf-1;
         }
@@ -183,6 +184,7 @@ void Spektr::CalculateTimeGraf()
    }
    delete [] InBuf;
    InBuf = nullptr;
+   SizeInBuf=0;
 }
 
 /*void Spektr::DeleteBufers()
