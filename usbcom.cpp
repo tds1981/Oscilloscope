@@ -7,8 +7,7 @@ UsbCom::UsbCom()
 
 void UsbCom::run()
 {
-   uint32_t OneReadDate = 2*SamplingRate/100;
-    //setup COM port
+   //setup COM port
    serial.setPortName(NamePort); //NamePort
    serial.setBaudRate(1024000);
    serial.setDataBits(QSerialPort::Data8);
@@ -18,7 +17,7 @@ void UsbCom::run()
    serial.open(QSerialPort::ReadWrite);
    if (serial.isOpen())
    {
-       serial.clear();
+    serial.clear();
     work=true;
     NameFile = "data"+QDateTime::currentDateTime().toString("dd_HH_mm_ss")+"."+TypeFile; //"raw";
     File.setFileName(NameFile);
@@ -34,15 +33,17 @@ void UsbCom::run()
    // char data[SizeBuferPort];
     Savelog("Начинаем чтение");
     uint32_t Cursor=0;
-    uint16_t* Port = new uint16_t[SamplingRate];
+    unsigned int SizeDataOut=SamplingRate/10;
+    uint32_t OneReadDate = SizeDataOut;
+    uint16_t* Port = new uint16_t[SizeDataOut];
     while(work)
     {
          serial.waitForReadyRead(1);
          maxSize = serial.bytesAvailable();
          if (maxSize >= OneReadDate)
          { 
-            if((maxSize<(SamplingRate-Cursor)*2)&&(maxSize%2==0)) OneReadDate = maxSize;
-            else OneReadDate = (SamplingRate-Cursor)*2;
+            if((maxSize<(SizeDataOut-Cursor)*2)&&(maxSize%2==0)) OneReadDate = (uint32_t)maxSize;
+            else OneReadDate = (SizeDataOut-Cursor)*2;
             char* p = reinterpret_cast<char*>(&Port[Cursor]);
             readSize = serial.read(p, OneReadDate);
             for(uint32_t k=0; k<readSize/2; k++) Port[Cursor+k] = Port[Cursor+k]>>1;
@@ -50,11 +51,11 @@ void UsbCom::run()
             File.flush();
             Savelog("Было Готово к чтению: "+QString::number(maxSize)+ " Прочитано:"+QString::number(readSize));
             Cursor+=readSize/2;
-            if (Cursor>=SamplingRate)
+            if (Cursor==SizeDataOut)
             {            
-                emit OutData(Port);
+                emit OutData(Port, SizeDataOut);
                 Cursor = 0;
-                Port = new uint16_t[SamplingRate];
+                Port = new uint16_t[SizeDataOut];
             }
          }
     }

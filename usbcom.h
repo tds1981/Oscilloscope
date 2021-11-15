@@ -37,7 +37,7 @@ public:
        QSerialPort serial;
        QFile File;
 signals:
-       void OutData(uint16_t* buf);
+       void OutData(uint16_t* buf, unsigned int SizeData);
        //void OutDataSpectr(uint16_t* buf);
 
 };

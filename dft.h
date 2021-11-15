@@ -27,7 +27,7 @@ public:
 
 private slots:
     void on_pushButton_clicked();
-    void ReceiveData(unsigned int sec, unsigned int* data, unsigned int SizeArray);
+    void ReceiveData(unsigned int sec, unsigned int* data, unsigned int* dataX, unsigned int SizeArray);
     void ResiveDataUSB(double* buf);
 
 private:
@@ -36,8 +36,7 @@ private:
     Ui::DFT *uiDFT;
     PlotGrafic *scDFT;
     Spektr *SpektrCalcul;
-    //UsbCom *usb;
-  //  Spektr *Calculate;
+
 };
 
 #endif // DFT_H

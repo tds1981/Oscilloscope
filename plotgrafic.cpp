@@ -61,6 +61,20 @@ void PlotGrafic::DrawBuferGrafic(unsigned int* Buf, unsigned int SizeBuf)
         else addLine(BeginX+i, BeginY+Buf[i], BeginX+i+1, BeginY+Buf[i]+1, QPen(Qt::green,DensityLine,Qt::SolidLine,Qt::RoundCap));
 }
 
+void PlotGrafic::mousePressEvent(QGraphicsSceneMouseEvent * event)
+{
+    if (ShowArrayX != nullptr)
+    {
+        QGraphicsTextItem *Text;
+        unsigned int k = static_cast<unsigned int>(event->scenePos().x());
+        unsigned int f = 100000 * ShowArrayX[k]/0x20000;
+        Text = this->addText("f = "+ QString::number(ShowArrayX[k]), QFont ("Times" , 10 , QFont ::Thin)); //QString::number(ScaleX*i)
+
+        Text->setX(event->scenePos().x());
+        Text->setY(event->scenePos().y());
+    }
+}
+
 
 /*void PlotGrafic::DrawGrafic()
 {

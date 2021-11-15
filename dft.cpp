@@ -12,7 +12,7 @@ DFT::DFT(QWidget *parent) :
 
     SpektrCalcul = new Spektr(scDFT->BeginX, scDFT->BeginY, scDFT->EndX, scDFT->EndY, SamplingRate, 2);
     //SpektrCalcul->runFunction = Spektr::CalculateFFT;
-    connect(SpektrCalcul, SIGNAL(OutResult(unsigned int,  unsigned int*, unsigned int)), this, SLOT(ReceiveData(unsigned int,  unsigned int*, unsigned int)));
+    connect(SpektrCalcul, SIGNAL(OutResult(unsigned int,  unsigned int*, unsigned int*, unsigned int)), this, SLOT(ReceiveData(unsigned int,  unsigned int*, unsigned int*, unsigned int)));
     connect(parent, SIGNAL(OutDataSpectr(double*)), this, SLOT(ResiveDataUSB(double*)));
 
     uiDFT->statusbar->showMessage("Форма открыта. Ждём данные");
@@ -39,12 +39,14 @@ void DFT::ResiveDataUSB(double* buf)
     else delete [] buf;
 }
 
-void DFT::ReceiveData(unsigned int sec,  unsigned int* data, unsigned int SizeArray)
+void DFT::ReceiveData(unsigned int sec,  unsigned int* data, unsigned int* dataX, unsigned int SizeArray)
 {
      uiDFT->NumberSec->setText("Секунда: "+QString::number(sec));
      //scDFT->DrawPoints(data,  SizeArray);
     // scDFT->TypeLine = false;
      scDFT->DrawBuferGrafic(data, SizeArray);
+     if (scDFT->ShowArrayX != nullptr) delete[] scDFT->ShowArrayX;
+     scDFT->ShowArrayX = dataX;
      delete[] data;
 }
 

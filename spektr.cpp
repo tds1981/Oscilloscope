@@ -10,6 +10,7 @@ Spektr::Spektr(int BX, int BY, int EX, int EY, unsigned int SR, uint8_t TF)
   SamplingRate = SR;
   TypeFunc = TF;
   //runFunction = Func;
+     tmr = new QTimer(this); // Создаем объект класса QTimer и передаем адрес переменной
 }
 
 void Spektr::run()
@@ -90,7 +91,7 @@ void Spektr::CalculateFFT()
 
   unsigned int maxX = static_cast<unsigned int>(EndX-BeginX);
   unsigned int* Out = new unsigned int[maxX];
- // OutBuf[0] = new unsigned int[Xmax];
+  unsigned int* OutX = new unsigned int[maxX];
 
   double FTvl_value;
   unsigned int* FTvl = new unsigned int[maxX];
@@ -102,7 +103,7 @@ void Spektr::CalculateFFT()
   while (i < Nft)
   {
       j = i * 2; FTvl_value = 2*sqrt(pow(Tmvl[j],2) + pow(Tmvl[j+1],2))/Nvl;
-      if(FTvl_value>FTvl_max) FTvl_max = FTvl_value;
+      if(FTvl_value>FTvl_max) {FTvl_max = FTvl_value; OutX[k]=i;}
 
       if (i%div == 0)
       {
@@ -123,7 +124,7 @@ void Spektr::CalculateFFT()
 
   sec++;
     qDebug() <<"Hello world";
-  emit OutResult(div, Out, maxX);
+  emit OutResult(div, Out, OutX, maxX);
   delete []Tmvl;
   delete []InBufForSpectr;
 }
@@ -132,56 +133,59 @@ void Spektr::CalculateFFT()
 
 void Spektr::CalculateTimeGraf()
 {
-  // if (OutBuf != nullptr) DeleteBufers();
-   Xmax = static_cast<unsigned int>(EndX-BeginX);
-   CountBufers = SamplingRate/CountSampling;
-   OutBuf = new unsigned int*[CountBufers];
+   unsigned int Xmax = static_cast<unsigned int>(EndX-BeginX);
+   unsigned int CountBufers = SizeInBuf/CountSamplingShow;
+  // OutBuf = new unsigned int*[CountBufers];
 
-   double dx = (double)Xmax / CountSampling;
-   double dk = (double)CountSampling / Xmax;
+   double dx = (double)Xmax / CountSamplingShow;
+   double dk = (double)CountSamplingShow / Xmax;
    double k=0;
    double x=0;
    unsigned int k_index=0;
    unsigned int x_index=0;
    double y=BeginY;
+   unsigned int interval = CountSamplingShow*1000 / SamplingRate;
+   tmr->setInterval(interval); // Задаем интервал таймера
 
    for(unsigned int j=0; j<CountBufers; j++)
-   {
+   {  
+    tmr->setSingleShot(true);
+    tmr->start();
+
     unsigned int* OutY = new unsigned int[Xmax];
     x=0;
     x_index=0;
-    if (Xmax >= CountSampling)
+    if (Xmax >= CountSamplingShow)
         while(x_index<Xmax)
         {
         k_index = static_cast<unsigned int>(floor(k));
-        // unsigned int x_index = static_cast<unsigned int>(floor(x));
-         if (k_index<SamplingRate) y = EndY - ((EndY-BeginY)*InBuf[k_index])/0x7ff8; //-0x7ff
+        if (k_index < SizeInBuf) y = EndY - ((EndY-BeginY)*InBuf[k_index])/0x7ff8; //-0x7ff
         OutY[x_index] = static_cast<unsigned int>(round(y));
         x_index++;
         k+=dk;
-        if(k_index>=SamplingRate) k_index=SamplingRate-1;
+        if(k_index>=SizeInBuf) k_index=SizeInBuf-1;
         }
     else
-        while(k_index<j*CountSampling)
+        while(k_index<j*CountSamplingShow)
         {
-          // unsigned int k_index = static_cast<unsigned int>(floor(k));
            x_index = static_cast<unsigned int>(floor(x));
-           if (k<SamplingRate) y = EndY - ((EndY-BeginY)*InBuf[k_index])/0x7ff8; //-0x7ff
+           if (k<SizeInBuf) y = EndY - ((EndY-BeginY)*InBuf[k_index])/0x7ff8; //-0x7ff
            OutY[x_index] = static_cast<unsigned int>(round(y));
            x+=dx;
            k_index++;
-           if(k_index>=SamplingRate) k_index=SamplingRate-1;
+           if(k_index>=SizeInBuf) k_index=SizeInBuf-1;
         }
 
+        while(tmr->remainingTime() > 0){};
+        emit OutDataTimeGraf(OutY, Xmax);
+        tmr->stop();
 
-    OutBuf[j] = OutY;
    }
    delete [] InBuf;
-  // DeleteBufers();
-
+   InBuf = nullptr;
 }
 
-void Spektr::DeleteBufers()
+/*void Spektr::DeleteBufers()
 {
    unsigned int i=0;
    while(TimerWork){}
@@ -193,7 +197,7 @@ void Spektr::DeleteBufers()
             i++;
      }
    if (!TimerWork){ delete [] OutBuf; OutBuf = nullptr;}
-}
+}*/
 
 void Spektr::CalculateDFT()
 {

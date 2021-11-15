@@ -17,10 +17,10 @@ MainWindow::MainWindow(QWidget *parent) :
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
                  ui->comboBox->addItem(info.portName());
 
-    tmr = new QTimer(this); // Создаем объект класса QTimer и передаем адрес переменной
-   // tmr->setInterval(TimerInterval); // Задаем интервал таймера
-    connect(tmr, SIGNAL(timeout()), this, SLOT(TimerEvent())); // Подключаем сигнал таймера к нашему слоту
-    connect(usb, SIGNAL(OutData(uint16_t*)), this, SLOT(ResiveDate(uint16_t*)));
+
+   // connect(tmr, SIGNAL(timeout()), this, SLOT(TimerEvent())); // Подключаем сигнал таймера к нашему слоту
+    connect(usb, SIGNAL(OutData(uint16_t*, unsigned int)), this, SLOT(ResiveDate(uint16_t*, unsigned int)));
+    connect(Calculate, SIGNAL(OutDataTimeGraf(unsigned int*, unsigned int)), this, SLOT(ShowDataTimeGraf(unsigned int*, unsigned int)));
 
     QAction* TypeFile = new QAction("TypeFile", 0);
     TypeFile->setText("Тип файла: wav или rav");
@@ -67,36 +67,59 @@ void MainWindow::CallFormDFT()
     frm->show();
 }
 
-void MainWindow::ResiveDate(uint16_t* data)
+void MainWindow::ResiveDateForSpectr(uint16_t* data)
 {
-   // if (frm != nullptr)
-   // {
-        double* DataForSpectr = new double[SamplingRate+31072];
-        for(unsigned int j=0; j<SamplingRate; j++) DataForSpectr[j]=static_cast<double>(data[j]);
-        //if (frm->DataSamples == nullptr) frm->DataSamples =  DataForSpectr;
-        emit OutDataSpectr(DataForSpectr);
-   // }
+    // if (frm != nullptr)
+    // {
+         double* DataForSpectr = new double[SamplingRate+31072];
+         for(unsigned int j=0; j<SamplingRate; j++) DataForSpectr[j]=static_cast<double>(data[j]);
+         //if (frm->DataSamples == nullptr) frm->DataSamples =  DataForSpectr;
+         emit OutDataSpectr(DataForSpectr);
+    // }
+
+}
+void MainWindow::ResiveDate(uint16_t* data, unsigned int SizeData)
+{
+   static unsigned int CountElements;
 
    if (!Calculate->isRunning())
    {
-       Calculate->CountSampling = SamplingRate*TimerInterval/1000;
+     if (SizeData >= CountSamplingShow)
+     {
+       Calculate->CountSamplingShow = CountSamplingShow;
        Calculate->InBuf = data;
+       Calculate->SizeInBuf = SizeData;
        Calculate->EndX = sc->EndX;
        Calculate->EndY = sc->EndY;
-       if ((Calculate->OutBuf != DateBufs)&&(Calculate->OutBuf != nullptr)) Calculate->DeleteBufers();
        Calculate->start(QThread::HighPriority);
-       if (tmr->signalsBlocked())
-       {
-           NumberBuf=0;
-           tmr->setInterval(TimerInterval); // Задаем интервал таймера
-           tmr->start();
-           tmr->blockSignals(false);
-       }
+     }
+     else
+     {
+        if (Calculate->InBuf != nullptr)
+                Calculate->InBuf = new uint16_t[CountSamplingShow];
+        for(unsigned int i=0;i<SizeData;i++) Calculate->InBuf[CountElements++]=data[i];
+        delete [] data;
+        if (CountElements>=CountSamplingShow)
+        {
+           Calculate->SizeInBuf = CountElements;
+           CountElements=0;
+           Calculate->CountSamplingShow = CountSamplingShow;
+           Calculate->EndX = sc->EndX;
+           Calculate->EndY = sc->EndY;
+           Calculate->start(QThread::HighPriority);
+        }
+     }
    }
    else delete [] data;
 }
+ void MainWindow::ShowDataTimeGraf(unsigned int* Data, unsigned int SizeArray)
+{
+    sc->DrawBuferGrafic(Data, SizeArray);
+     ui->statusBar->showMessage(" SizeInBuf: "+QString::number(Calculate->SizeInBuf)+ " Show X max: "+QString::number(SizeArray)+ " CountSamplingShow: "+QString::number(Calculate->CountSamplingShow));
+    delete [] Data;
+}
 
-void MainWindow::TimerEvent()
+/*void MainWindow::TimerEvent()
 { 
     Calculate->TimerWork = true;
     if ((NumberBuf == 0)&&(Calculate->OutBuf != nullptr))
@@ -111,63 +134,67 @@ void MainWindow::TimerEvent()
       if (DateBufs[NumberBuf] != nullptr)
       {
         sc->DrawBuferGrafic(DateBufs[NumberBuf], Size1Buf);
-        ui->statusBar->showMessage("  Timer Interval: "+QString::number(TimerInterval)+ "  CountBufers: "+QString::number(Calculate->CountBufers)+ + "  CountSampling: "+QString::number(Calculate->CountSampling)+ "  Xmax: "+QString::number(Calculate->Xmax) + " NumberBuf: "+QString::number(NumberBuf));
+
         delete [] DateBufs[NumberBuf];
         DateBufs[NumberBuf]=nullptr;
         NumberBuf++;
         if (NumberBuf>=CountBufs) {NumberBuf=0; delete [] DateBufs; DateBufs=nullptr;}
      }
      Calculate->TimerWork = false;
-}
+}*/
 
 void MainWindow::on_dial_valueChanged(int value)
 {
-    tmr->blockSignals(true);
-    usb->blockSignals(true);
-    tmr->stop();
+    ui->dial->setEnabled(false);
+   // bool StateUsb = usb->work;
+   /* if (StateUsb)
+    {
+        usb->blockSignals(true);
+        usb->work = false;
+    }*/
 
     unsigned int Scale=0; // микросекунд в делении
     switch (value)
     {
-    case 1: Scale=100;
+    case 1: Scale = SamplingRate/1000;
     break;
-    case 2: Scale=100;
+    case 2: Scale = SamplingRate/1000;
     break;
-    case 3: Scale=200;
+    case 3: Scale = SamplingRate/500;
     break;
-    case 4: Scale=200;
+    case 4: Scale = SamplingRate/500;
     break;
-    case 5: Scale=500;
+    case 5: Scale = SamplingRate/200;
     break;
-    case 6: Scale=500;
+    case 6: Scale = SamplingRate/200;
     break;
-    case 7: Scale=1000;
+    case 7: Scale = SamplingRate/100;
     break;
-    case 8: Scale=1000;
+    case 8: Scale = SamplingRate/100;
     break;
-    case 9: Scale=2000;
+    case 9: Scale = SamplingRate/50;
     break;
-    case 10: Scale=2000;
+    case 10: Scale = SamplingRate/50;
     break;
-    case 11: Scale=5000;
+    case 11: Scale = SamplingRate/20;
     break;
-    case 12: Scale=5000;
+    case 12: Scale = SamplingRate/20;
     break;
-    case 13: Scale=10000;
+    case 13: Scale = SamplingRate/10;
     break;
-    case 14: Scale=10000;
+    case 14: Scale = SamplingRate/10;
     break;
-    case 15: Scale=20000;
+    case 15: Scale = SamplingRate/5;
     break;
-    case 16: Scale=20000;
+    case 16: Scale = SamplingRate/5;
     break;
-    case 17: Scale=50000;
+    case 17: Scale = SamplingRate/2;
     break;
-    case 18: Scale=50000;
+    case 18: Scale = SamplingRate/2;
     break;
-    case 19: Scale=100000;
+    case 19: Scale = SamplingRate;
     break;
-    case 20: Scale=100000;
+    case 20: Scale = SamplingRate;
 
     }
 
@@ -179,27 +206,33 @@ void MainWindow::on_dial_valueChanged(int value)
     {
         ui->labelScale->setText(QString::number(Scale/1000)+" МИЛЛИсекунд");
     }
-    while(Calculate->TimerWork){};
-    while(Calculate->isRunning()){};
-    if((DateBufs != nullptr)&&(NumberBuf!=0))
+
+    CountSamplingShow = Scale;
+    ui->statusBar->showMessage("CountSamplingShow: "+QString::number(CountSamplingShow));
+
+    //while (usb->isRunning());
+  //  if (Scale > SamplingRate/10) SizeDataOut = SamplingRate;
+  //  else SizeDataOut = SamplingRate/10;
+/*
+    if (StateUsb)
     {
-       for(unsigned int i=0; i<CountBufs; i++)
-        if(DateBufs[i] != nullptr) {delete [] DateBufs[i]; DateBufs[i]=nullptr;}
-       delete [] DateBufs;
-       DateBufs = nullptr;
-    }
-    if (Calculate->OutBuf != nullptr) Calculate->DeleteBufers();
-    TimerInterval=(Scale * sc->CountXSegments)/1000; // микросекунды в миллисекунды
-    ui->statusBar->showMessage("TimerInterval: "+QString::number(TimerInterval));
-    usb->blockSignals(false);
+        usb->work = true;
+        usb->start(QThread::HighPriority);
+        if (usb->isRunning()) usb->blockSignals(false);
+    }*/
+    ui->dial->setEnabled(true);
 }
 
 
 void MainWindow::wheelEvent (QWheelEvent *event)
 {
-   //ui->label->setText(QString::number());
-   if ((event->angleDelta().y()>0)&&(ui->dial->value()<20)) ui->dial->setValue(ui->dial->value()+1);
-   if ((event->angleDelta().y()<0)&&(ui->dial->value()>0))  ui->dial->setValue(ui->dial->value()-1);
+   if ((event->x()>ui->groupBox->x())&&(event->x()<ui->groupBox->x()+ui->groupBox->width())
+      && (event->y()>ui->groupBox->y())&&(event->y()<ui->groupBox->y()+ui->groupBox->height())
+      && ui->dial->isEnabled())
+   {
+    if ((event->angleDelta().y()>0)&&(ui->dial->value()<20)) ui->dial->setValue(ui->dial->value()+1);
+    if ((event->angleDelta().y()<0)&&(ui->dial->value()>0))  ui->dial->setValue(ui->dial->value()-1);
+   }
 }
 
 void MainWindow::on_pushButton_2_clicked()
@@ -215,20 +248,14 @@ void MainWindow::on_pushButton_2_clicked()
      usb->start(QThread::HighPriority);
      if (usb->isRunning())//&&usb->serial.isOpen())
      {
-         tmr->blockSignals(true);
-         // tmr->setInterval(TimerInterval); // Задаем интервал таймера
-           // tmr->start();
-           // tmr->blockSignals(false);
-           // QMessageBox::information(0, "Чтение данных", "Захват данных пошёл");
-            ui->pushButton_2->setText("Остановить захват данных");
+         //tmr->blockSignals(true);
+         ui->pushButton_2->setText("Остановить захват данных");
      }
     else QMessageBox::information(0, "ОШИБКА", "Поток не запущен ");
    }
    else
    {
       usb->work = false;
-      tmr->blockSignals(true);
-      tmr->stop();
       QMessageBox::information(0, "Захват", "Завершение захвата");
       if (!usb->isRunning())
           ui->pushButton_2->setText("Начать захват данных");

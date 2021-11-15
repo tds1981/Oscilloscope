@@ -5,7 +5,6 @@
 #include <QWheelEvent>
 #include <QMessageBox>
 #include <math.h>
-#include <QTimer>
 #include <QFile>
 
 #include "plotgrafic.h"
@@ -26,9 +25,11 @@ public:
     ~MainWindow();
 
 private slots:
-    void TimerEvent();
+   // void TimerEvent();
 
-    void ResiveDate(uint16_t* data);
+    void ResiveDate(uint16_t* data, unsigned int SizeData);
+    void ResiveDateForSpectr(uint16_t* data);
+    void ShowDataTimeGraf(unsigned int* Data, unsigned int SizeArray);
 
     void on_dial_valueChanged(int value);
 
@@ -52,13 +53,13 @@ private:
     DFT *frm;
     PlotGrafic *sc;
     Spektr *Calculate;
-    QTimer *tmr;
-    uint32_t TimerInterval=10;
+    unsigned int CountSamplingShow=1000; //количество семплов выводимых за раз
+   // unsigned int SizeDataOut;
 
-    unsigned int** DateBufs;
-    unsigned int CountBufs;
-    unsigned int Size1Buf;
-    unsigned int NumberBuf=0;
+    //unsigned int** DateBufs;
+    //unsigned int CountBufs;
+    //unsigned int Size1Buf;
+    //unsigned int NumberBuf=0;
     //QFile File;
 public:
      UsbCom *usb;
