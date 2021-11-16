@@ -17,7 +17,6 @@ MainWindow::MainWindow(QWidget *parent) :
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
                  ui->comboBox->addItem(info.portName());
 
-
    // connect(tmr, SIGNAL(timeout()), this, SLOT(TimerEvent())); // Подключаем сигнал таймера к нашему слоту
     connect(usb, SIGNAL(OutData(uint16_t*, unsigned int)), this, SLOT(ResiveDate(uint16_t*, unsigned int)));
     connect(Calculate, SIGNAL(OutDataTimeGraf(unsigned int*, unsigned int)), this, SLOT(ShowDataTimeGraf(unsigned int*, unsigned int)));
@@ -40,6 +39,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->menu_3->addAction(DFT_Form);
 
     frm = new DFT(this);
+    connect(usb, SIGNAL(OutDataSpectr(double*, unsigned int)), frm, SLOT(ResiveDataUSB(double*, unsigned int)));
+
    // connect(this, SIGNAL(OutDataSpectr(double*)), frm, SLOT(ResiveDataUSB(double*)));
 }
 
@@ -64,20 +65,12 @@ void MainWindow::ChangeTFile()
 
 void MainWindow::CallFormDFT()
 {
+    usb->CalculFrequency = true;
+    usb->DoDataForSpectr = true;
+    ui->checkBox->setChecked(true);
     frm->show();
 }
 
-void MainWindow::ResiveDateForSpectr(uint16_t* data)
-{
-    // if (frm != nullptr)
-    // {
-         double* DataForSpectr = new double[SamplingRate+31072];
-         for(unsigned int j=0; j<SamplingRate; j++) DataForSpectr[j]=static_cast<double>(data[j]);
-         //if (frm->DataSamples == nullptr) frm->DataSamples =  DataForSpectr;
-         emit OutDataSpectr(DataForSpectr);
-    // }
-
-}
 void MainWindow::ResiveDate(uint16_t* data, unsigned int SizeData)
 {
    //static unsigned int CountElements;
@@ -112,21 +105,18 @@ void MainWindow::ResiveDate(uint16_t* data, unsigned int SizeData)
 }
  void MainWindow::ShowDataTimeGraf(unsigned int* Data, unsigned int SizeArray)
 {
+    if  ((usb->CalculFrequency)&&(usb->Frequency != -1))
+    {
+        ui->label_2->setText("Частота (Гц): "+QString::number(usb->Frequency));
+        ui->label->setText("Период (с): "+QString::number(usb->Period)+"  F= (Гц): "+QString::number(1/usb->Period));
+    }
     sc->DrawBuferGrafic(Data, SizeArray);
-     ui->statusBar->showMessage(" SizeInBuf: "+QString::number(Calculate->SizeInBuf)+ " Show X max: "+QString::number(SizeArray)+ " CountSamplingShow: "+QString::number(Calculate->CountSamplingShow));
+    ui->statusBar->showMessage(" SizeInBuf: "+QString::number(Calculate->SizeInBuf)+ " Show X max: "+QString::number(SizeArray)+ " CountSamplingShow: "+QString::number(Calculate->CountSamplingShow));
     delete [] Data;
 }
 
 void MainWindow::on_dial_valueChanged(int value)
 {
-    ui->dial->setEnabled(false);
-   // bool StateUsb = usb->work;
-   /* if (StateUsb)
-    {
-        usb->blockSignals(true);
-        usb->work = false;
-    }*/
-
     unsigned int Scale=0; // микросекунд в делении
     switch (value)
     {
@@ -184,17 +174,6 @@ void MainWindow::on_dial_valueChanged(int value)
     CountSamplingShow = Scale;
     ui->statusBar->showMessage("CountSamplingShow: "+QString::number(CountSamplingShow));
 
-    //while (usb->isRunning());
-  //  if (Scale > SamplingRate/10) SizeDataOut = SamplingRate;
-  //  else SizeDataOut = SamplingRate/10;
-/*
-    if (StateUsb)
-    {
-        usb->work = true;
-        usb->start(QThread::HighPriority);
-        if (usb->isRunning()) usb->blockSignals(false);
-    }*/
-    ui->dial->setEnabled(true);
 }
 
 
@@ -259,4 +238,9 @@ void MainWindow::on_radioButton_clicked(bool checked)
 void MainWindow::on_spinBox_valueChanged(int arg1)
 {
   sc->DensityLine = arg1;
+}
+
+void MainWindow::on_checkBox_clicked(bool checked)
+{
+    usb->CalculFrequency = checked;
 }

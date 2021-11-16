@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include <QApplication>
+#include "usbcom.h"
 
 int main(int argc, char *argv[])
 {

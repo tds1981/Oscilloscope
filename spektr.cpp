@@ -32,8 +32,8 @@ const double TwoPi = 6.283185307179586;
 
 void Spektr::CalculateFFT()
 {
-    int Nvl = 131072;
-    int Nft  = 131072;
+    int Nvl = SizeInBuf;
+    int Nft  = SizeInBuf;
     double *AVal = InBufForSpectr;
    // double *FTvl = new double;
    static unsigned int sec;
@@ -130,7 +130,6 @@ void Spektr::CalculateFFT()
 }
 
 
-
 void Spektr::CalculateTimeGraf()
 {
    unsigned int Xmax = static_cast<unsigned int>(EndX-BeginX);
@@ -158,12 +157,12 @@ void Spektr::CalculateTimeGraf()
     if (Xmax >= CountSamplingShow)
         while(x_index<Xmax)
         {
-        k_index = static_cast<unsigned int>(floor(k));
-        if (k_index < SizeInBuf) y = EndY - ((EndY-BeginY)*InBuf[k_index])/0x7ff8; //-0x7ff
-        OutY[x_index] = static_cast<unsigned int>(round(y));
-        x_index++;
-        k+=dk;
-        if(k_index>=SizeInBuf) k_index=SizeInBuf-1;
+             k_index = static_cast<unsigned int>(floor(k));
+             if (k_index < SizeInBuf) y = EndY - ((EndY-BeginY)*InBuf[k_index])/0x7ff8; //-0x7ff
+             OutY[x_index] = static_cast<unsigned int>(round(y));
+             x_index++;
+             k+=dk;
+             if(k_index>=SizeInBuf) k_index=SizeInBuf-1;
         }
     else
         for(unsigned int h=0; h<CountSamplingShow; h++)

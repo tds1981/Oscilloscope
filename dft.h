@@ -6,7 +6,6 @@
 #include <QFileDialog>
 #include "plotgrafic.h"
 #include "spektr.h"
-//#include "UsbCom.h"
 
 
 using namespace std;
@@ -23,12 +22,10 @@ public:
     explicit DFT(QWidget *parent);
     ~DFT();
 
-    //uint16_t* DataSamples;
-
 private slots:
     void on_pushButton_clicked();
     void ReceiveData(unsigned int sec, unsigned int* data, unsigned int* dataX, unsigned int SizeArray);
-    void ResiveDataUSB(double* buf);
+    void ResiveDataUSB(double* buf, unsigned int SizeData);
 
 private:
     void resizeEvent(QResizeEvent * event);

@@ -25,12 +25,15 @@ public:
     UsbCom();
     void run();
     void Savelog(QString S);
+    int  CalculateFrequency(uint16_t value);
+    double  CalculatePeriod(uint16_t value);
    // WAVHEADER WavHeader(uint32_t  sampleRate);
 public:
+       bool DoDataForSpectr = false;
+       bool CalculFrequency = false;
        char TypeFile[5]="wav";
-      // uint16_t PortBuf[SamplingRate]; //1 секунда, частота оцифровки 100k
-       //uint32_t OneReadDate;
-       //uint16_t Faza;
+       int Frequency = -1; //вычисленная частота сигнала
+       double Period = -1;
        bool work=false;
        QString NamePort;
        QString NameFile;
@@ -38,7 +41,7 @@ public:
        QFile File;
 signals:
        void OutData(uint16_t* buf, unsigned int SizeData);
-       //void OutDataSpectr(uint16_t* buf);
+       void OutDataSpectr(double* buf, unsigned int SizeData);
 
 };
 

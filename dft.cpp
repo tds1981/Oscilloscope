@@ -13,7 +13,6 @@ DFT::DFT(QWidget *parent) :
     SpektrCalcul = new Spektr(scDFT->BeginX, scDFT->BeginY, scDFT->EndX, scDFT->EndY, SamplingRate, 2);
     //SpektrCalcul->runFunction = Spektr::CalculateFFT;
     connect(SpektrCalcul, SIGNAL(OutResult(unsigned int,  unsigned int*, unsigned int*, unsigned int)), this, SLOT(ReceiveData(unsigned int,  unsigned int*, unsigned int*, unsigned int)));
-    connect(parent, SIGNAL(OutDataSpectr(double*)), this, SLOT(ResiveDataUSB(double*)));
 
     uiDFT->statusbar->showMessage("Форма открыта. Ждём данные");
 }
@@ -22,19 +21,17 @@ DFT::~DFT()
 {
     delete uiDFT;
 }
-void DFT::ResiveDataUSB(double* buf)
+void DFT::ResiveDataUSB(double* buf, unsigned int SizeData)
 {
     static int numberArr;
     uiDFT->statusbar->showMessage("Получины данные. Массив № "+ QString::number(++numberArr));
     if (!SpektrCalcul->isRunning())
     {
-        //Calculate->CountSampling = SamplingRate*TimerInterval/1000;
         SpektrCalcul->InBufForSpectr = buf;
+        SpektrCalcul->SizeInBuf = SizeData;
         SpektrCalcul->EndX = scDFT->EndX;
         SpektrCalcul->EndY = scDFT->EndY;
-       // if ((Calculate->OutBuf != DateBufs)&&(Calculate->OutBuf != nullptr)) Calculate->DeleteBufers();
-       SpektrCalcul->start(QThread::HighPriority);
-      //  sc->DrawBuferGrafic(DateBufs[NumberBuf], Size1Buf);
+        SpektrCalcul->start(QThread::HighPriority);
     }
     else delete [] buf;
 }

@@ -8,7 +8,6 @@
 #include <QFile>
 
 #include "plotgrafic.h"
-#include "usbcom.h"
 #include "spektr.h"
 #include "dft.h"
 
@@ -28,7 +27,7 @@ private slots:
    // void TimerEvent();
 
     void ResiveDate(uint16_t* data, unsigned int SizeData);
-    void ResiveDateForSpectr(uint16_t* data);
+    //void ResiveDateForSpectr(uint16_t* data);
     void ShowDataTimeGraf(unsigned int* Data, unsigned int SizeArray);
 
     void on_dial_valueChanged(int value);
@@ -47,6 +46,8 @@ private slots:
     void ChangeTFile();
 
     void CallFormDFT();
+    void on_checkBox_clicked(bool checked);
+
 private:
    void resizeEvent(QResizeEvent * event);
     Ui::MainWindow *ui;
@@ -62,7 +63,7 @@ private:
     //unsigned int NumberBuf=0;
     //QFile File;
 public:
-     UsbCom *usb;
+    UsbCom *usb;
 
 signals:
      void OutDataSpectr(double* buf);

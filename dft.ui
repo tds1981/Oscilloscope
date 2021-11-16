@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Спектр сохранённого сигнала по методу дискретного преобразования Фурье</string>
+   <string>Спектр сигнала по методу дискретного преобразования Фурье</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QGraphicsView" name="graphicsView">

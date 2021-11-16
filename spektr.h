@@ -22,15 +22,11 @@ public:
     int BeginX, BeginY;
     int EndX, EndY;
     unsigned int CountSamplingShow;
-    //unsigned int Faza;
     bool TimerWork=false;
     uint16_t* InBuf;
-    unsigned int SizeInBuf;
     double* InBufForSpectr;
+    unsigned int SizeInBuf;
     QTimer* tmr;
-    //unsigned int** OutBuf;
-    //unsigned int Xmax;
-   // unsigned int CountBufers;
 
     void CalculateDFT();
     void CalculateTimeGraf();
@@ -39,7 +35,6 @@ public:
     uint8_t TypeFunc;
 private:
     int DFT(uint16_t *buf, uint16_t *OutBuf, unsigned int n);
-
 
 signals:
        void OutResult(unsigned int secund, unsigned int* data, unsigned int* dataX, unsigned int SizeArray);
