@@ -24,7 +24,7 @@ public:
     ~MainWindow();
 
 private slots:
-   // void TimerEvent();
+    void ReadPort();
 
     void ResiveDate(uint16_t* data, unsigned int SizeData);
     //void ResiveDateForSpectr(uint16_t* data);
@@ -53,15 +53,10 @@ private:
     Ui::MainWindow *ui;
     DFT *frm;
     PlotGrafic *sc;
-    Spektr *Calculate;
+    CalculateTimeGrafic *Calculate;
     unsigned int CountSamplingShow=1000; //количество семплов выводимых за раз
-   // unsigned int SizeDataOut;
+    uint64_t SizeDataReceived=0;
 
-    //unsigned int** DateBufs;
-    //unsigned int CountBufs;
-    //unsigned int Size1Buf;
-    //unsigned int NumberBuf=0;
-    //QFile File;
 public:
     UsbCom *usb;
 

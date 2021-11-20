@@ -29,10 +29,10 @@ private slots:
 
 private:
     void resizeEvent(QResizeEvent * event);
-    int DFTcalculation(uint16_t *buf, uint16_t *OutBuf, unsigned int n);
+   // int DFTcalculation(uint16_t *buf, uint16_t *OutBuf, unsigned int n);
     Ui::DFT *uiDFT;
     PlotGrafic *scDFT;
-    Spektr *SpektrCalcul;
+    CalculateFFT *SpektrCalcul;
 
 };
 

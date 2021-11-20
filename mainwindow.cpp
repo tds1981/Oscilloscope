@@ -10,15 +10,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->graphicsView->setScene(sc);
     //ui->dial->setValue(ui->dial->value());
 
-    Calculate = new Spektr(sc->BeginX, sc->BeginY, sc->EndX, sc->EndY, SamplingRate, 1);
+    Calculate = new CalculateTimeGrafic(sc->BeginX, sc->BeginY, sc->EndX, sc->EndY, SamplingRate);
    // Calculate->runFunction = Calculate->CalculateTimeGraf;
     usb = new  UsbCom();
     ui->comboBox->addItem("COM8");
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
                  ui->comboBox->addItem(info.portName());
+    connect(usb->serial, SIGNAL(readyRead()), this, SLOT(ReadPort()));
 
    // connect(tmr, SIGNAL(timeout()), this, SLOT(TimerEvent())); // Подключаем сигнал таймера к нашему слоту
-    connect(usb, SIGNAL(OutData(uint16_t*, unsigned int)), this, SLOT(ResiveDate(uint16_t*, unsigned int)));
+    connect(usb->File, SIGNAL(OutData(uint16_t*, unsigned int)), this, SLOT(ResiveDate(uint16_t*, unsigned int)));
     connect(Calculate, SIGNAL(OutDataTimeGraf(unsigned int*, unsigned int)), this, SLOT(ShowDataTimeGraf(unsigned int*, unsigned int)));
 
     QAction* TypeFile = new QAction("TypeFile", 0);
@@ -49,15 +50,21 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::ReadPort()
+{
+    if (!usb->isRunning())
+        usb->start(QThread::HighestPriority);
+}
+
 void MainWindow::ChangeTFile()
 {
-         if (usb->TypeFile[0]=='w')
-         {   usb->TypeFile[0]='r';  usb->TypeFile[2]='w';
+         if (usb->File->TypeFile[0]=='w')
+         {   usb->File->TypeFile[0]='r';  usb->File->TypeFile[2]='w';
              ui->statusBar->showMessage("Тип сохраняемого файла: raw");
              QMessageBox::information(0, "Смена типа сохраняемого файла", "Тип сохраняемого файла: raw");
          }
          else
-         {   usb->TypeFile[0]='w'; usb->TypeFile[2]='v';
+         {   usb->File->TypeFile[0]='w'; usb->File->TypeFile[2]='v';
              QMessageBox::information(0, "Смена типа сохраняемого файла", "Тип сохраняемого файла: wav");
             ui->statusBar->showMessage("Тип сохраняемого файла: wav");
          }
@@ -65,15 +72,17 @@ void MainWindow::ChangeTFile()
 
 void MainWindow::CallFormDFT()
 {
-    usb->CalculFrequency = true;
-    usb->DoDataForSpectr = true;
+    //usb->CalculFrequency = true;
+    //usb->DoDataForSpectr = true;
     ui->checkBox->setChecked(true);
     frm->show();
 }
 
 void MainWindow::ResiveDate(uint16_t* data, unsigned int SizeData)
 {
-   //static unsigned int CountElements;
+  // static unsigned int NumberBufer;
+  // ui->statusBar->showMessage(" Получили буфер № "+ QString::number(NumberBufer++) +" размером: "+QString::number(SizeData));
+   SizeDataReceived+=SizeData;
 
    if (!Calculate->isRunning())
    {
@@ -105,13 +114,15 @@ void MainWindow::ResiveDate(uint16_t* data, unsigned int SizeData)
 }
  void MainWindow::ShowDataTimeGraf(unsigned int* Data, unsigned int SizeArray)
 {
-    if  ((usb->CalculFrequency)&&(usb->Frequency != -1))
+    /*if  ((usb->CalculFrequency)&&(usb->Frequency != -1))
     {
         ui->label_2->setText("Частота (Гц): "+QString::number(usb->Frequency));
         ui->label->setText("Период (с): "+QString::number(usb->Period)+"  F= (Гц): "+QString::number(1/usb->Period));
-    }
+    }*/
     sc->DrawBuferGrafic(Data, SizeArray);
-    ui->statusBar->showMessage(" SizeInBuf: "+QString::number(Calculate->SizeInBuf)+ " Show X max: "+QString::number(SizeArray)+ " CountSamplingShow: "+QString::number(Calculate->CountSamplingShow));
+    uint64_t sec= (uint64_t)SizeDataReceived/SamplingRate;
+    uint64_t CB = 2*(uint64_t)SizeDataReceived;
+    ui->statusBar->showMessage("Получено байт: "+QString::number(CB)+" Секунд: "+QString::number(sec)+" SizeInBuf: "+QString::number(Calculate->SizeInBuf)+ " Show X max: "+QString::number(SizeArray)+ " CountSamplingShow: "+QString::number(Calculate->CountSamplingShow));
     delete [] Data;
 }
 
@@ -176,7 +187,6 @@ void MainWindow::on_dial_valueChanged(int value)
 
 }
 
-
 void MainWindow::wheelEvent (QWheelEvent *event)
 {
    if ((event->x()>ui->groupBox->x())&&(event->x()<ui->groupBox->x()+ui->groupBox->width())
@@ -195,23 +205,21 @@ void MainWindow::on_pushButton_2_clicked()
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
     if (info.portName()==usb->NamePort) pornEn=true;
     if (!pornEn) {QMessageBox::information(0, "ОШИБКА", "Порт не найден. Подключите кабель"); return;}
-
-    if (!usb->isRunning())
+    if (!usb->serial->isOpen())
     {
-     usb->start(QThread::HighPriority);
-     if (usb->isRunning())//&&usb->serial.isOpen())
-     {
-         //tmr->blockSignals(true);
+      if (usb->OpenSerial())
+      {
          ui->pushButton_2->setText("Остановить захват данных");
-     }
-    else QMessageBox::information(0, "ОШИБКА", "Поток не запущен ");
-   }
-   else
+      }
+      else QMessageBox::information(0, "ОШИБКА", "Порт не открыт ");
+    }
+    else
    {
-      usb->work = false;
-      QMessageBox::information(0, "Захват", "Завершение захвата");
-      if (!usb->isRunning())
-          ui->pushButton_2->setText("Начать захват данных");
+      if (usb->CloseSerial())
+      {
+            ui->pushButton_2->setText("Начать захват данных");
+            QMessageBox::information(0, "Захват", "Завершение захвата");
+      }
    }
 }
 
@@ -242,5 +250,5 @@ void MainWindow::on_spinBox_valueChanged(int arg1)
 
 void MainWindow::on_checkBox_clicked(bool checked)
 {
-    usb->CalculFrequency = checked;
+    //usb->CalculFrequency = checked;
 }

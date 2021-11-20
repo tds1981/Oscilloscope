@@ -13,10 +13,38 @@
 #include <string>
 #include <QDateTime>
 #include "wav.h"
+//#include <vector>
+#include <deque>
 
 using namespace std;
 
 const unsigned int SamplingRate = 100000; //частота дискретизации
+
+typedef struct
+{
+    unsigned int  size;
+    char* data;
+}Array;
+
+class FileSave : public QThread
+{
+     Q_OBJECT
+public:
+    FileSave();
+    void run();
+    void Savelog(QString S);
+    void SaveWav();
+    void OpenFile();
+public:
+       char TypeFile[5]="wav";
+       QString NameFile;
+       uint32_t SizeFile = 0;
+       std::ofstream out;  // поток для записи
+       std::deque<Array> deq;
+signals:
+       void OutData(uint16_t* buf, unsigned int SizeData);
+};
+//-------------------------------------------------------------------------
 
 class UsbCom : public QThread
 {
@@ -24,25 +52,11 @@ class UsbCom : public QThread
 public:
     UsbCom();
     void run();
-    void Savelog(QString S);
-    int  CalculateFrequency(uint16_t value);
-    double  CalculatePeriod(uint16_t value);
-   // WAVHEADER WavHeader(uint32_t  sampleRate);
-public:
-       bool DoDataForSpectr = false;
-       bool CalculFrequency = false;
-       char TypeFile[5]="wav";
-       int Frequency = -1; //вычисленная частота сигнала
-       double Period = -1;
-       bool work=false;
-       QString NamePort;
-       QString NameFile;
-       QSerialPort serial;
-       QFile File;
-signals:
-       void OutData(uint16_t* buf, unsigned int SizeData);
-       void OutDataSpectr(double* buf, unsigned int SizeData);
-
+    bool OpenSerial();
+    bool CloseSerial();
+    QString NamePort;
+    QSerialPort* serial;
+    FileSave *File;
 };
 
 #endif // USBCOM_H
