@@ -14,23 +14,55 @@ void Calculate::SetParametrs(int BX, int BY, int EX, int EY, unsigned int SR)
     SamplingRate = SR;
 }
 
+ArraySemples Calculate::CreateInBuf(bool Del_accept)
+{
+    ArraySemples InBuf;
+    if (deqSamples.empty()) {InBuf.sizeData=0; return InBuf;}
+    if (deqSamples.back().sizeData < CountSamplingShow)
+    {
+        unsigned int CountElements=0;
+        for(int j=0; j<deqSamples.size(); j++) CountElements+=deqSamples[j].sizeData;
+        if (CountElements<CountSamplingShow) {InBuf.sizeData=0; return InBuf;}
+
+        CountElements=0;
+        InBuf.data = new uint16_t[CountSamplingShow];
+        InBuf.sizeData =CountSamplingShow;
+        InBuf.Delete = Del_accept;
+        while (CountElements<CountSamplingShow)
+        {
+            for(int h=0; h<deqSamples.back().sizeData; h++)
+            {
+                if(CountElements+h >= CountSamplingShow) break;
+                InBuf.data[CountElements+h]=deqSamples.back().data[h];
+            }
+            CountElements+=deqSamples.back().sizeData;
+            if (deqSamples.back().Delete) delete [] deqSamples.back().data;
+            deqSamples.pop_back();
+        }
+    }
+    else
+    {
+        InBuf = deqSamples.back();
+        deqSamples.pop_back();
+    }
+    return  InBuf;
+}
+
+//------------------------- class CalculateTimeGrafic --------------------------------------------
 CalculateTimeGrafic::CalculateTimeGrafic(int BX, int BY, int EX, int EY, unsigned int SR)
 {
    SetParametrs(BX, BY, EX, EY, SR);
    tmr = new QTimer(this); // Создаем объект класса QTimer и передаем адрес переменной*/
+   //Frequency = new CalculateFrequency();
 }
-
-CalculateFFT::CalculateFFT(int BX, int BY, int EX, int EY, unsigned int SR)
-{
-   SetParametrs(BX, BY, EX, EY, SR);
-}
-
 
 void CalculateTimeGrafic::run()
 {
+    ArraySemples InBuf = CreateInBuf(!Frequency.accept); // флаг разрешающий удаление буфера выставляем в зависимости от того вычисляется далее частота или нет
+    if (InBuf.sizeData == 0) return;
+
     unsigned int Xmax = static_cast<unsigned int>(EndX-BeginX);
-    unsigned int CountBufers = SizeInBuf/CountSamplingShow;
-   // OutBuf = new unsigned int*[CountBufers];
+    unsigned int CountBufers = InBuf.sizeData/CountSamplingShow;
 
     double dx = (double)Xmax / CountSamplingShow;
     double dk = (double)CountSamplingShow / Xmax;
@@ -42,7 +74,8 @@ void CalculateTimeGrafic::run()
     unsigned int interval = CountSamplingShow*1000 / SamplingRate;
     tmr->setInterval(interval); // Задаем интервал таймера
      qDebug() <<"Timer interval: "<<interval;
-    for(unsigned int j=0; j<CountBufers; j++)
+
+   for(unsigned int j=0; j<CountBufers; j++)
     {
      tmr->setSingleShot(true);
      tmr->start();
@@ -54,38 +87,110 @@ void CalculateTimeGrafic::run()
          while(x_index<Xmax)
          {
               k_index = static_cast<unsigned int>(floor(k));
-              if (k_index < SizeInBuf) y = EndY - ((EndY-BeginY)*InBuf[k_index])/0x7ff8; //-0x7ff
+              if (k_index < InBuf.sizeData) y = EndY - ((EndY-BeginY)*InBuf.data[k_index])/0x7ff8; //-0x7ff
               OutY[x_index] = static_cast<unsigned int>(round(y));
               x_index++;
               k+=dk;
-              if(k_index>=SizeInBuf) break; //k_index=SizeInBuf-1;
+              if(k_index>=InBuf.sizeData) break; //k_index=SizeInBuf-1;
          }
      else
          for(unsigned int h=0; h<CountSamplingShow; h++)
          {
            // x_index = static_cast<unsigned int>(floor(x));
-            if (k_index<SizeInBuf) y = EndY - ((EndY-BeginY)*InBuf[k_index])/0x7ff8; //-0x7ff
+            if (k_index<InBuf.sizeData) y = EndY - ((EndY-BeginY)*InBuf.data[k_index])/0x7ff8; //-0x7ff
             if (x_index<Xmax) OutY[x_index] = static_cast<unsigned int>(round(y));
             //x+=dx;
             if (h % (CountSamplingShow / Xmax) ==0) x_index++;
             k_index++;
-            if(k_index>=SizeInBuf) break; // k_index=SizeInBuf-1;
+            if(k_index>=InBuf.sizeData) break; // k_index=SizeInBuf-1;
          }
 
          while(tmr->remainingTime() > 0){};
          emit OutDataTimeGraf(OutY, Xmax);
          tmr->stop();
-         if(k_index>=SizeInBuf) break;
+         if(k_index>=InBuf.sizeData) break;
     }
-    delete [] InBuf;
-    InBuf = nullptr;
-    SizeInBuf=0;
+    if (InBuf.Delete) delete [] InBuf.data;
+    else
+    {
+      InBuf.Delete = true;
+      Frequency.InBuf=InBuf;
+      Frequency.start(QThread::LowPriority);
+    }
+}
+//-----------------------class CalculateFrequency ----------------
+CalculateFrequency::CalculateFrequency()
+{
+}
+
+int CalculateFrequency::Frequency(uint16_t value)
+{
+    static int rise=0, max=0, min=0, fall=0, period=0; //,
+    static uint16_t v0;
+
+    // вычисляем количество переходов через максимальное значение
+    if (period == 0) {max=0; min=0;}
+    if (value>v0) {rise++;}
+    if (value<v0) {fall++;}
+    if ((value<v0)&&(rise>3)) {rise=0; max++;}
+    if ((value>v0)&&(fall>3)) {fall=0; min++;}
+
+    v0 = value;
+    period++;
+    if (period == SamplingRate) {period=0; return (max+min)/2;} //
+    else return -1;
+}
+
+double CalculateFrequency::Period(uint16_t value)
+{
+    static int rise=0, period=0; //max=0, min=0, fall=0,
+    static uint16_t v0;
+    double PeriodReturn = -1;
+    // вычисляем количество переходов через максимальное значение
+    if (value>v0) {rise++;}
+    //if (value<v0) {fall++;}
+    if ((value<v0)&&(rise>3)) {rise=0; PeriodReturn = (double)period / SamplingRate; period = 0;}
+    //if ((value>v0)&&(fall>3)) {fall=0; }
+
+    v0 = value;
+    period++;
+    return PeriodReturn;
+
+}
+
+void CalculateFrequency::run()
+{
+    double  periodBuf[10];
+    unsigned int j=0;
+    for(unsigned int i=0; i<InBuf.sizeData; i++)
+    {
+        int f = Frequency(InBuf.data[i]);
+        double pBuf = Period(InBuf.data[i]);
+        if (f != -1) ValueFrequency = f;
+        if (pBuf != -1) periodBuf[j++] = pBuf;
+        if (j >= 10) j=0;
+    }
+    double delta=abs(periodBuf[0]-periodBuf[1]);
+    unsigned int k=0;
+    for(unsigned int i=1; i<9; i++)
+        if (delta > abs(periodBuf[i]-periodBuf[i+1]))
+                {delta = abs(periodBuf[i]-periodBuf[i+1]); k=i;}
+
+     ValuePeriod = periodBuf[k];
+     if (InBuf.Delete) delete [] InBuf.data;
+}
+
+//--------------------- class CalculateFFT ----------------------------------
+CalculateFFT::CalculateFFT(int BX, int BY, int EX, int EY, unsigned int SR)
+{
+   SetParametrs(BX, BY, EX, EY, SR);
 }
 
 void CalculateFFT::run()
 {
-    int Nvl = SizeInBuf;
-    int Nft  = SizeInBuf;
+    ArraySemples InBuf = deqSamples.back();
+    int Nvl = InBuf.sizeData;
+    int Nft  = InBuf.sizeData;
     double *AVal = InBufForSpectr;
    // double *FTvl = new double;
    static unsigned int sec;
@@ -182,61 +287,11 @@ void CalculateFFT::run()
 }
 
 /*
-int Spektr::Frequency(uint16_t value)
-{
-    static int rise=0, max=0, min=0, fall=0, period=0; //,
-    static uint16_t v0;
 
-    // вычисляем количество переходов через максимальное значение
-    if (period == 0) {max=0; min=0;}
-    if (value>v0) {rise++;}
-    if (value<v0) {fall++;}
-    if ((value<v0)&&(rise>3)) {rise=0; max++;}
-    if ((value>v0)&&(fall>3)) {fall=0; min++;}
-
-    v0 = value;
-    period++;
-    if (period == SamplingRate) {period=0; return (max+min)/2;} //
-    else return -1;
-}
-
-double Spektr::Period(uint16_t value)
-{
-    static int rise=0, period=0; //max=0, min=0, fall=0,
-    static uint16_t v0;
-    double PeriodReturn = -1;
-    // вычисляем количество переходов через максимальное значение
-    if (value>v0) {rise++;}
-    //if (value<v0) {fall++;}
-    if ((value<v0)&&(rise>3)) {rise=0; PeriodReturn = (double)period / SamplingRate; period = 0;}
-    //if ((value>v0)&&(fall>3)) {fall=0; }
-
-    v0 = value;
-    period++;
-    return PeriodReturn;
-
-}
 
 int Spektr::CalculateFrequency()
 {
-    if (CalculFrequency)
-    {
-        if ((DataForSpectr==nullptr)&&(DoDataForSpectr)) DataForSpectr = new double[SamplingRate+31072];
-        for(unsigned int j=0; j<SizeDataOut; j++)
-        {
-            if (DoDataForSpectr) DataForSpectr[CursorDataForSpectr++]=static_cast<double>(Port[j]);
-            int f = CalculateFrequency(Port[j]);
-            double  periodBuf = CalculatePeriod(Port[j]);
-            if (f != -1) Frequency = f;
-            if (periodBuf != -1) Period = periodBuf;
-        }
-        if ((CursorDataForSpectr==SamplingRate)&&(DoDataForSpectr))
-        {
-            emit OutDataSpectr(DataForSpectr, SamplingRate+31072);
-            CursorDataForSpectr=0;
-            DataForSpectr=nullptr;
-        }
-    }
+
 }*/
 
 /*

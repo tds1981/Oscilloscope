@@ -83,7 +83,25 @@ void MainWindow::ResiveDate(uint16_t* data, unsigned int SizeData)
   // static unsigned int NumberBufer;
   // ui->statusBar->showMessage(" Получили буфер № "+ QString::number(NumberBufer++) +" размером: "+QString::number(SizeData));
    SizeDataReceived+=SizeData;
+   ArraySemples Sample;
+   Sample.data = data;
+   Sample.sizeData = SizeData;
+   //Sample.Delete = !Calculate->Frequency.accept;
 
+   if (!Calculate->isRunning())
+   {
+        Calculate->deqSamples.push_front(Sample);
+        Calculate->CountSamplingShow = CountSamplingShow;
+        Calculate->EndX = sc->EndX;
+        Calculate->EndY = sc->EndY;
+        Calculate->start(QThread::NormalPriority);
+    }
+   else
+        if (Calculate->CountSamplingShow == CountSamplingShow)
+                Calculate->deqSamples.push_front(Sample);
+        else delete[] data;
+
+/*
    if (!Calculate->isRunning())
    {
      if (SizeData >= CountSamplingShow)
@@ -111,18 +129,22 @@ void MainWindow::ResiveDate(uint16_t* data, unsigned int SizeData)
      }
    }
    else delete [] data;
+ */
 }
  void MainWindow::ShowDataTimeGraf(unsigned int* Data, unsigned int SizeArray)
 {
-    /*if  ((usb->CalculFrequency)&&(usb->Frequency != -1))
+
+    if  ((Calculate->Frequency.accept)&&(Calculate->Frequency.ValueFrequency != -1))
     {
-        ui->label_2->setText("Частота (Гц): "+QString::number(usb->Frequency));
-        ui->label->setText("Период (с): "+QString::number(usb->Period)+"  F= (Гц): "+QString::number(1/usb->Period));
-    }*/
+        ui->label_3->setText("Частота (Гц): "+QString::number(Calculate->Frequency.ValueFrequency));
+        ui->label_2->setText("Частота по периоду (Гц): "+QString::number(1/Calculate->Frequency.ValuePeriod));
+        ui->label->setText("Период (с): "+QString::number(Calculate->Frequency.ValuePeriod));
+    }
     sc->DrawBuferGrafic(Data, SizeArray);
     uint64_t sec= (uint64_t)SizeDataReceived/SamplingRate;
     uint64_t CB = 2*(uint64_t)SizeDataReceived;
-    ui->statusBar->showMessage("Получено байт: "+QString::number(CB)+" Секунд: "+QString::number(sec)+" SizeInBuf: "+QString::number(Calculate->SizeInBuf)+ " Show X max: "+QString::number(SizeArray)+ " CountSamplingShow: "+QString::number(Calculate->CountSamplingShow));
+    ui->statusBar->showMessage("Получено байт: "+QString::number(CB)+" Секунд: "+QString::number(sec)+" SizeInBuf: "+ " Show X max: "+QString::number(SizeArray)+ " CountSamplingShow: "+QString::number(Calculate->CountSamplingShow));
+    //+QString::number(Calculate->SizeInBuf)
     delete [] Data;
 }
 
@@ -250,5 +272,5 @@ void MainWindow::on_spinBox_valueChanged(int arg1)
 
 void MainWindow::on_checkBox_clicked(bool checked)
 {
-    //usb->CalculFrequency = checked;
+    Calculate->Frequency.accept = checked;
 }

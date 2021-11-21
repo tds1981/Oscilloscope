@@ -28,7 +28,7 @@ void DFT::ResiveDataUSB(double* buf, unsigned int SizeData)
     if (!SpektrCalcul->isRunning())
     {
         SpektrCalcul->InBufForSpectr = buf;
-        SpektrCalcul->SizeInBuf = SizeData;
+        //SpektrCalcul->SizeInBuf = SizeData;
         SpektrCalcul->EndX = scDFT->EndX;
         SpektrCalcul->EndY = scDFT->EndY;
         SpektrCalcul->start(QThread::HighPriority);

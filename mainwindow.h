@@ -59,7 +59,6 @@ private:
 
 public:
     UsbCom *usb;
-
 signals:
      void OutDataSpectr(double* buf);
 

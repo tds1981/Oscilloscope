@@ -40,7 +40,7 @@ public:
        QString NameFile;
        uint32_t SizeFile = 0;
        std::ofstream out;  // поток для записи
-       std::deque<Array> deq;
+       std::deque<QByteArray> deq;
 signals:
        void OutData(uint16_t* buf, unsigned int SizeData);
 };

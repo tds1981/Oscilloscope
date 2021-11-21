@@ -5,7 +5,7 @@ FileSave::FileSave()
 {
 
 }
-
+/*
 void FileSave::run()
 {
     while(!deq.empty())
@@ -19,6 +19,28 @@ void FileSave::run()
         emit OutData(p, Buf.size/2);
         SizeFile+=Buf.size;
         Savelog("Сохранено в файл: "+QString::number(Buf.size)+" Размер файла: "+QString::number(SizeFile)+" Очередь: "+QString::number(deq.size()));
+        deq.pop_back();
+    }
+}*/
+
+void FileSave::run()
+{
+    while(!deq.empty())
+    {
+        QByteArray Buf = deq.back();
+        unsigned int myBufSize = Buf.size()/2;
+        uint16_t* ByteArr = new uint16_t[myBufSize];
+        char* p = reinterpret_cast<char*>(ByteArr);
+        for(uint32_t k=0; k<myBufSize; k++)
+        {
+            p[2*k]=Buf[2*k];
+            p[2*k+1]=Buf[2*k+1];
+            ByteArr[k] = ByteArr[k]>>1;
+        }
+        if (out.is_open()) out.write(p, 2*myBufSize);
+        emit OutData(ByteArr, myBufSize);
+        SizeFile+=2*myBufSize;
+        Savelog("Сохранено в файл: "+QString::number(2*myBufSize)+" Размер файла: "+QString::number(SizeFile)+" Очередь: "+QString::number(deq.size()));
         deq.pop_back();
     }
 }
@@ -88,7 +110,7 @@ bool UsbCom::CloseSerial()
     File->Savelog("Порт закрыт");
     return !serial->isOpen();
 }
-
+/*
 void UsbCom::run()
 {
     qint64 maxSize;
@@ -101,6 +123,17 @@ void UsbCom::run()
         Buf.data = new char[Buf.size];
         readSize = serial->read(Buf.data, maxSize);
         //Buf.size = static_cast<unsigned int>(readSize);
+        File->deq.push_front(Buf);
+    }
+    if (!File->isRunning()) File->start(QThread::LowestPriority);
+}*/
+
+void UsbCom::run()
+{
+    QByteArray Buf;
+    while (!serial->atEnd())
+    {
+        Buf = serial->readAll();
         File->deq.push_front(Buf);
     }
     if (!File->isRunning()) File->start(QThread::LowestPriority);

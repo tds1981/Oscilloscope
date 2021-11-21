@@ -141,17 +141,17 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>740</x>
-      <y>20</y>
-      <width>261</width>
+      <x>720</x>
+      <y>10</y>
+      <width>361</width>
       <height>21</height>
      </rect>
     </property>
     <property name="font">
      <font>
       <pointsize>12</pointsize>
-      <weight>75</weight>
-      <bold>true</bold>
+      <weight>50</weight>
+      <bold>false</bold>
       <underline>true</underline>
      </font>
     </property>
@@ -263,11 +263,18 @@
    <widget class="QCheckBox" name="checkBox">
     <property name="geometry">
      <rect>
-      <x>740</x>
-      <y>80</y>
-      <width>131</width>
+      <x>720</x>
+      <y>90</y>
+      <width>191</width>
       <height>21</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="text">
      <string>Вычислять частоту</string>
@@ -276,9 +283,28 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>740</x>
-      <y>50</y>
-      <width>301</width>
+      <x>720</x>
+      <y>40</y>
+      <width>361</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+      <underline>true</underline>
+     </font>
+    </property>
+    <property name="text">
+     <string>Период:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>720</x>
+      <y>70</y>
+      <width>381</width>
       <height>21</height>
      </rect>
     </property>
@@ -288,7 +314,7 @@
      </font>
     </property>
     <property name="text">
-     <string>Период:</string>
+     <string>Частота (Гц):</string>
     </property>
    </widget>
   </widget>

@@ -7,8 +7,16 @@
 #include <QString>
 #include <QTimer>
 #include "usbcom.h"
+#include <deque>
 
 using namespace std;
+
+typedef struct
+{
+    bool Delete = false;
+    unsigned int  sizeData;
+    uint16_t* data;
+}ArraySemples;
 
 class Calculate : public QThread
 {
@@ -16,36 +24,56 @@ class Calculate : public QThread
 public:
     Calculate();
     void SetParametrs(int BX, int BY, int EX, int EY, unsigned int SR);
+    ArraySemples CreateInBuf(bool Del_accept);
+
+    std::deque<ArraySemples> deqSamples;
     QString NameFile;
     unsigned int SamplingRate; // частота дискретизации
     int BeginX, BeginY;
     int EndX, EndY;
     unsigned int CountSamplingShow;
-    bool TimerWork=false;
-    uint16_t* InBuf;
+    //bool TimerWork=false;
+
     double* InBufForSpectr;
-    unsigned int SizeInBuf;
 
     void CalculateDFT();
     //void CalculateTimeGraf();
     void CalculateFFT(); //uint16_t* IN, unsigned int* Out, int Count
     uint8_t TypeFunc;
 private:
+
     int DFT(uint16_t *buf, uint16_t *OutBuf, unsigned int n);
-    int Frequency(uint16_t value);
-    double Period(uint16_t value);
-    int CalculateFrequency();
+
 signals:
        //void OutResult(unsigned int secund, unsigned int* data, unsigned int* dataX, unsigned int SizeArray);
       // void OutDataTimeGraf(unsigned int* Data, unsigned int SizeArray);
 };
+
+//----------------------------------------------------------------------------------
+class CalculateFrequency : public QThread
+{
+    Q_OBJECT
+public:
+    CalculateFrequency();
+    void run();
+    bool accept = false;
+    ArraySemples InBuf;
+    int ValueFrequency;
+    double ValuePeriod;
+private:
+    int Frequency(uint16_t value);
+    double Period(uint16_t value);
+signals:
+};
 //------------------------------------------------------------------------------
+
 class CalculateTimeGrafic : public Calculate
 {
     Q_OBJECT
 public:
     CalculateTimeGrafic(int BX, int BY, int EX, int EY, unsigned int SR);
     void run();
+    CalculateFrequency Frequency;
 private:
     QTimer* tmr;
 signals:
@@ -65,3 +93,4 @@ signals:
 };
 
 #endif // SPEKTR_H
+
