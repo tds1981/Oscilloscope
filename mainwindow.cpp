@@ -75,6 +75,7 @@ void MainWindow::CallFormDFT()
     //usb->CalculFrequency = true;
     //usb->DoDataForSpectr = true;
     ui->checkBox->setChecked(true);
+    frm->SpektrCalcul->CountSamplingShow = 131072;
     frm->show();
 }
 
@@ -87,6 +88,13 @@ void MainWindow::ResiveDate(uint16_t* data, unsigned int SizeData)
    Sample.data = data;
    Sample.sizeData = SizeData;
    //Sample.Delete = !Calculate->Frequency.accept;
+   if(frm->isVisible())
+   {
+        Sample.dataDouble = new double[SizeData];
+        for(unsigned int i=0; i<SizeData; i++) Sample.dataDouble[i] = static_cast<double>(Sample.data[i]);
+        frm->SpektrCalcul->deqSamples.push_front(Sample);
+        if (!frm->SpektrCalcul->isRunning()) frm->SpektrCalcul->start(QThread::NormalPriority);
+   }
 
    if (!Calculate->isRunning())
    {

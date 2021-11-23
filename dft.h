@@ -21,6 +21,7 @@ class DFT : public QMainWindow
 public:
     explicit DFT(QWidget *parent);
     ~DFT();
+    CalculateFFT *SpektrCalcul;
 
 private slots:
     void on_pushButton_clicked();
@@ -32,8 +33,6 @@ private:
    // int DFTcalculation(uint16_t *buf, uint16_t *OutBuf, unsigned int n);
     Ui::DFT *uiDFT;
     PlotGrafic *scDFT;
-    CalculateFFT *SpektrCalcul;
-
 };
 
 #endif // DFT_H

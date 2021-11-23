@@ -14,17 +14,23 @@ void Calculate::SetParametrs(int BX, int BY, int EX, int EY, unsigned int SR)
     SamplingRate = SR;
 }
 
+bool Calculate::CheckCountElementsInDEQ()
+{
+    unsigned int CountElements=0;
+    for(int j=0; j<deqSamples.size(); j++) CountElements+=deqSamples.at(j).sizeData;
+    if (CountElements<CountSamplingShow)  return false;
+    else return true;
+}
+
 ArraySemples Calculate::CreateInBuf(bool Del_accept)
 {
     ArraySemples InBuf;
     if (deqSamples.empty()) {InBuf.sizeData=0; return InBuf;}
     if (deqSamples.back().sizeData < CountSamplingShow)
     {
-        unsigned int CountElements=0;
-        for(int j=0; j<deqSamples.size(); j++) CountElements+=deqSamples[j].sizeData;
-        if (CountElements<CountSamplingShow) {InBuf.sizeData=0; return InBuf;}
+        if (!CheckCountElementsInDEQ()) {InBuf.sizeData=0; return InBuf;}
 
-        CountElements=0;
+        unsigned int CountElements=0;
         InBuf.data = new uint16_t[CountSamplingShow];
         InBuf.sizeData =CountSamplingShow;
         InBuf.Delete = Del_accept;
@@ -188,10 +194,11 @@ CalculateFFT::CalculateFFT(int BX, int BY, int EX, int EY, unsigned int SR)
 
 void CalculateFFT::run()
 {
-    ArraySemples InBuf = deqSamples.back();
-    int Nvl = InBuf.sizeData;
-    int Nft  = InBuf.sizeData;
-    double *AVal = InBufForSpectr;
+    if (!CheckCountElementsInDEQ()) return;
+
+    int Nvl = (int)CountSamplingShow;
+    int Nft = (int)CountSamplingShow;
+   // double *AVal = InBufForSpectr;
    // double *FTvl = new double;
    static unsigned int sec;
 
@@ -201,10 +208,16 @@ void CalculateFFT::run()
   double *Tmvl;
 
   n = Nvl * 2; Tmvl = new double[n];
-
+  unsigned int ind=0; //double ddd;
   for (i = 0; i < n; i+=2) {
    Tmvl[i] = 0;
-   Tmvl[i+1] = AVal[i/2];
+   Tmvl[i+1] = deqSamples.back().dataDouble[ind++]; // AVal[i/2];
+   if (ind>=deqSamples.back().sizeData)
+   {
+       ind=0;
+       if (deqSamples.back().dataDouble != nullptr) delete [] deqSamples.back().dataDouble;
+       if (!deqSamples.empty()) deqSamples.pop_back();
+   }
   }
 
   i = 1; j = 1;
@@ -281,31 +294,12 @@ void CalculateFFT::run()
 
   sec++;
     qDebug() <<"Hello world";
-  emit OutResult(div, Out, OutX, maxX);
+  emit OutResult(sec, Out, OutX, maxX);
   delete []Tmvl;
-  delete []InBufForSpectr;
-}
-
-/*
-
-
-int Spektr::CalculateFrequency()
-{
-
-}*/
-
-/*
-
-void Spektr::CalculateFFT()
-{
 
 }
-*/
-/*
-void Spektr::CalculateTimeGraf()
-{
 
-}*/
+
 
 /*void Spektr::DeleteBufers()
 {

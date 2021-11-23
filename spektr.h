@@ -16,6 +16,7 @@ typedef struct
     bool Delete = false;
     unsigned int  sizeData;
     uint16_t* data;
+    double* dataDouble;
 }ArraySemples;
 
 class Calculate : public QThread
@@ -25,7 +26,7 @@ public:
     Calculate();
     void SetParametrs(int BX, int BY, int EX, int EY, unsigned int SR);
     ArraySemples CreateInBuf(bool Del_accept);
-
+    bool CheckCountElementsInDEQ();
     std::deque<ArraySemples> deqSamples;
     QString NameFile;
     unsigned int SamplingRate; // частота дискретизации
@@ -34,7 +35,7 @@ public:
     unsigned int CountSamplingShow;
     //bool TimerWork=false;
 
-    double* InBufForSpectr;
+    //double* InBufForSpectr;
 
     void CalculateDFT();
     //void CalculateTimeGraf();

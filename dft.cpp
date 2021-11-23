@@ -23,7 +23,7 @@ DFT::~DFT()
 }
 void DFT::ResiveDataUSB(double* buf, unsigned int SizeData)
 {
-    static int numberArr;
+/*    static int numberArr;
     uiDFT->statusbar->showMessage("Получины данные. Массив № "+ QString::number(++numberArr));
     if (!SpektrCalcul->isRunning())
     {
@@ -34,6 +34,7 @@ void DFT::ResiveDataUSB(double* buf, unsigned int SizeData)
         SpektrCalcul->start(QThread::HighPriority);
     }
     else delete [] buf;
+    */
 }
 
 void DFT::ReceiveData(unsigned int sec,  unsigned int* data, unsigned int* dataX, unsigned int SizeArray)
@@ -49,7 +50,7 @@ void DFT::ReceiveData(unsigned int sec,  unsigned int* data, unsigned int* dataX
 
 void DFT::on_pushButton_clicked()
 {
-    SpektrCalcul->SamplingRate = 10000;
+    //SpektrCalcul->SamplingRate = 10000;
     SpektrCalcul->NameFile = QFileDialog::getOpenFileName(0, "Выбор файла для ДФП", "", "*.raw");
     //QMessageBox::information(0, "ОШИБКА", "Файл не открылся");
     if (!SpektrCalcul->isRunning())
