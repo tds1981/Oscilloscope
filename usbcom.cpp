@@ -90,14 +90,15 @@ bool UsbCom::OpenSerial()
 {
     File->OpenFile();
     //setup COM port
-   serial->setPortName("COM12"); //NamePort
-   serial->setBaudRate(1024000);
+
+   serial->setPortName(NamePort.toUtf8()); //NamePort
+   serial->setBaudRate(2048000);
    serial->setDataBits(QSerialPort::Data8);
    serial->setParity(QSerialPort::NoParity);
    serial->setStopBits(QSerialPort::OneStop);
    serial->setFlowControl(QSerialPort::NoFlowControl);
-   serial->open(QSerialPort::ReadOnly); //ReadWrite
-   if (serial->isOpen()) File->Savelog("Порт открыт. Начинаем чтение");
+   serial->open(QSerialPort::ReadWrite);
+   if (serial->isOpen()) File->Savelog("Порт открыт. Начинаем чтение порта"+NamePort);
    serial->clear();
    return serial->isOpen();
 }
