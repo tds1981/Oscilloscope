@@ -208,7 +208,7 @@ void CalculateFFT::run()
   double *Tmvl;
 
   n = Nvl * 2; Tmvl = new double[n];
-  unsigned int ind=0; //double ddd;
+  unsigned int ind=0;
   for (i = 0; i < n; i+=2) {
    Tmvl[i] = 0;
    Tmvl[i+1] = deqSamples.back().dataDouble[ind++]; // AVal[i/2];
@@ -268,17 +268,24 @@ void CalculateFFT::run()
   double FTvl_max=0;
   unsigned int k = 0;
   unsigned int  div = static_cast<unsigned int>(Nft) / maxX;
-
+  double f;
+  double Kfr = static_cast<double>(SamplingRate)/static_cast<double>(CountSamplingShow*div);
   i=0;
   while (i < Nft)
   {
       j = i * 2; FTvl_value = 2*sqrt(pow(Tmvl[j],2) + pow(Tmvl[j+1],2))/Nvl;
-      if(FTvl_value>FTvl_max) {FTvl_max = FTvl_value; OutX[k]=i;}
+      //if(FTvl_value>FTvl_max)
+      //  {
+            FTvl_max += FTvl_value/static_cast<double>(div);
+            f += static_cast<double>(i)*Kfr;
+       // }
 
       if (i%div == 0)
       {
            FTvl[k] = static_cast<unsigned int>(round(FTvl_max));
+           OutX[k]= static_cast<unsigned int>(round(f));
            FTvl_max =0;
+           f=0;
          // if (FTvl[k]>FTvl_max) FTvl_max = FTvl[k];
           k++;
           if (k>=maxX) k = maxX-1;

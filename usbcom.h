@@ -7,7 +7,7 @@
 #include <QFile>
 
 #include <fstream>
-#include <windows.h>
+//#include <windows.h>
 #include <iostream>
 #include <QString>
 #include <string>

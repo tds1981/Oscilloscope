@@ -241,7 +241,7 @@ void MainWindow::on_pushButton_2_clicked()
       {
          ui->pushButton_2->setText("Остановить захват данных");
       }
-      else QMessageBox::information(0, "ОШИБКА", "Порт не открыт ");
+      else QMessageBox::information(0, "ОШИБКА", "Порт " + usb->NamePort +" не открыт ");
     }
     else
    {
@@ -281,4 +281,11 @@ void MainWindow::on_spinBox_valueChanged(int arg1)
 void MainWindow::on_checkBox_clicked(bool checked)
 {
     Calculate->Frequency.accept = checked;
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+    ui->comboBox->clear();
+    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
+                 ui->comboBox->addItem(info.portName());
 }

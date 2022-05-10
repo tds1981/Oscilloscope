@@ -48,6 +48,8 @@ private slots:
     void CallFormDFT();
     void on_checkBox_clicked(bool checked);
 
+    void on_pushButton_clicked();
+
 private:
    void resizeEvent(QResizeEvent * event);
     Ui::MainWindow *ui;
