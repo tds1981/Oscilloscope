@@ -241,7 +241,7 @@ void MainWindow::on_pushButton_2_clicked()
       {
          ui->pushButton_2->setText("Остановить захват данных");
       }
-      else QMessageBox::information(0, "ОШИБКА", "Порт не открыт ");
+      else QMessageBox::information(0, "ОШИБКА", "Порт " + usb->NamePort +" не открыт ");
     }
     else
    {
